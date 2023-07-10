@@ -1,15 +1,15 @@
-from torchvision import datasets, transforms
 import torch
+from torchvision import datasets, transforms
 
 
-def imagenet_c_dataloader(project_root='..', noise_name='gaussian_noise', severity=3, batch_size=64, num_workers=0):
-    # TODO: Extend to other corruptions, only change noise_name and adjust path after adding the other corruptions
+def imagenet_c_dataloader(project_root='..', corruption_name='gaussian_noise', severity=3, batch_size=64, num_workers=0):
+    # TODO: Add more corruptions and modify docstring
     """
-    Loads the imagenet-c images using the pytorch ImageFolder convention
-    :param project_root: The path to the root of the project (parent directory of the `data` folder)
-    :param noise_name: The noise type (gaussian, impulse or shot noise)
+    Returns a pytorch DataLoader object of the imagenet-c images using the pytorch ImageFolder convention
+    :param project_root: Path to the root of the project (parent directory of the `data` folder)
+    :param corruption_name: Corruption type (only gaussian, impulse or shot noise available)
     :param severity: Noise severity (1-5)
-    :param batch_size: The suitable batch size to train a model on the data
+    :param batch_size: Suitable batch size to train a model on the data
     :param num_workers: Number of subprocesses to load the data
     :return: pytorch DataLoader object
     """
@@ -19,7 +19,7 @@ def imagenet_c_dataloader(project_root='..', noise_name='gaussian_noise', severi
 
     # Dataset object using the ImageFolder convention with crop and normalization applied
     distorted_dataset = datasets.ImageFolder(
-        root=f'{project_root}/data/noise/' + noise_name + '/' + str(severity),
+        root=f'{project_root}/data/imagenet-c/' + corruption_name + '/' + str(severity),
         transform=transforms.Compose(
             [transforms.CenterCrop(224), transforms.ToTensor(), transforms.Normalize(mean, std)]))
 
