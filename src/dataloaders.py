@@ -2,6 +2,7 @@ import torch
 from torchvision import datasets, transforms
 
 
+# code was inspired from: https://github.com/hendrycks/robustness/blob/master/ImageNet-C/test.py
 def imagenet_c_dataloader(project_root='..', corruption_name='gaussian_noise', severity=3, batch_size=64, num_workers=0):
     # TODO: Add more corruptions and modify docstring
     """
