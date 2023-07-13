@@ -37,6 +37,8 @@ for file in files:
     
     # Load the numpy array
     numpy_array = np.load(os.path.join(directory, file))
+    #load the labels data
+    labels = np.load(os.path.join(directory, "labels.npy"))
     
     # Add the numpy array and labels to the dictionary
     corruption_images[corruption_type] = (numpy_array, labels)
