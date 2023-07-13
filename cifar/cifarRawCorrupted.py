@@ -7,6 +7,29 @@ import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
 import matplotlib.pyplot as plt
 
+
+
+def split_dataset(dataset, train_ratio, val_ratio, test_ratio):
+    dataset_size = len(dataset)
+    indices = list(range(dataset_size))
+    np.random.shuffle(indices)
+
+    train_size = int(train_ratio * dataset_size)
+    val_size = int(val_ratio * dataset_size)
+    test_size = int(test_ratio * dataset_size)
+
+    train_indices = indices[:train_size]
+    val_indices = indices[train_size:train_size + val_size]
+    test_indices = indices[train_size + val_size:]
+
+    train_dataset = torch.utils.data.Subset(dataset, train_indices)
+    val_dataset = torch.utils.data.Subset(dataset, val_indices)
+    test_dataset = torch.utils.data.Subset(dataset, test_indices)
+
+    return train_dataset, val_dataset, test_dataset
+
+
+
 # Specify the file path
 file_name = "/content/CIFAR-10-C.tar"
 
@@ -108,7 +131,22 @@ num_images = 10
 # Specify the corruption type (e.g., 'gaussian_noise', 'motion_blur', etc.)
 corruption_type = 'gaussian_noise'
 
+# # Create an instance of the CustomDataset
+# dataset = CustomDataset(num_images=num_images, corruption_type=corruption_type)
+# dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+
+
+
+
 # Create an instance of the CustomDataset
-dataset = CustomDataset(num_images=num_images, corruption_type=corruption_type)
-dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+dataset = CustomDataset(num_images=1024, corruption_type=corruption_type)
+
+# now we split the dataset into train, validation, and test sets
+train_dataset, val_dataset, test_dataset = split_dataset(dataset, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1)
+
+# Create separate DataLoader instances for train, validation, and test sets
+train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
+val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=64, shuffle=False)
+test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False)
+
 
