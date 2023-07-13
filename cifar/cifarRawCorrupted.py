@@ -1,61 +1,98 @@
 import os
-import urllib.request
-import tarfile
 import numpy as np
 import torch
 import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
-import matplotlib.pyplot as plt
-
-
-# Specify the file path
-file_name = "/content/CIFAR-10-C.tar"
-
-# Check if the file already exists so we don't end-up downloading them many times
-if not os.path.exists(file_name):
-    # Download CIFAR-10-C dataset
-    url = "https://zenodo.org/record/2535967/files/CIFAR-10-C.tar"
-    urllib.request.urlretrieve(url, file_name)
-
-# Extract the dataset if it hasn't been extracted before
-cifar10c_dir = "/content/CIFAR-10-C"
-if not os.path.exists(cifar10c_dir):
-    with tarfile.open(file_name, "r") as tar:
-        tar.extractall()
-
-# Access the images
-# corruptions = os.listdir(cifar10c_dir)
-# corruption_images = {}
-# for corruption in corruptions:
-#     corruption_images[corruption] = []
-#     corruption_path = os.path.join(cifar10c_dir, corruption)
-#     if os.path.isdir(corruption_path):
-#         image_files = [file for file in os.listdir(corruption_path) if file.endswith('.npy')]
-#         for image_file in image_files:
-#             image_path = os.path.join(corruption_path, image_file)
-#             image = np.load(image_path)
-#             corruption_images[corruption].append(image)
+from torch.utils.data import Dataset
 
 
 
+# Specify the directory path to download the cifar-10-c
+directory = "/content/CIFAR-10-C"
 
-cifar10c_dir = "/content/CIFAR-10-C"
+# Get the list of files in the directory
+files = os.listdir(directory)
 
-# Access the images
-corruptions = os.listdir(cifar10c_dir)
+# Initialize the dictionary
 corruption_images = {}
-for corruption in corruptions:
-    corruption_images[corruption] = []
-    corruption_path = os.path.join(cifar10c_dir, corruption)
-    if os.path.isdir(corruption_path):
-        image_files = [file for file in os.listdir(corruption_path) if file.endswith('.npy')]
-        for image_file in image_files:
-            image_path = os.path.join(corruption_path, image_file)
-            image = np.load(image_path)
-            corruption_images[corruption].append(image)
+
+# Iterate through the files
+for file in files:
+    # Extract the corruption type (file name without the .npy extension)
+    corruption_type = os.path.splitext(file)[0]
+    
+    # Load the numpy array
+    numpy_array = np.load(os.path.join(directory, file))
+    
+    # Add the numpy array and labels to the dictionary
+    corruption_images[corruption_type] = (numpy_array, labels)
+
+# Print the dictionary keys and shapes
+for corruption_type in corruption_images:
+    numpy_array, labels = corruption_images[corruption_type]
+    print(f"Corruption Type: {corruption_type}")
+    print("Shape:", numpy_array.shape)
+    print("Labels:", labels)
+    print()
 
 
 
-cifar10_dataset = CIFAR10(root='./data', train=True, download=True, transform=transforms.ToTensor())
+class CustomDataset(Dataset):
+    def __init__(self, num_images=10, corruption_type="gaussian_noise"):
+        self.num_images = num_images
+        self.corruption_type = corruption_type
 
+        # Load the original CIFAR-10 dataset
+        self.cifar10_dataset = CIFAR10(root='./data', train=True, download=True, transform=transforms.ToTensor())
+
+        # Load the corruption images
+        directory = "/content/CIFAR-10-C"
+        files = os.listdir(directory)
+        self.corruption_images = {}
+        for file in files:
+            corruption_type = os.path.splitext(file)[0]
+            numpy_array = np.load(os.path.join(directory, file))
+            self.corruption_images[corruption_type] = numpy_array
+
+    def __len__(self):
+        return self.num_images
+
+    
+
+
+    def __getitem__(self, idx):
+      # Generate random indexes with the same size as the number of images
+      random_indexes = np.random.randint(len(self.cifar10_dataset), size=self.num_images)
+      
+      # Initialize empty lists for images, corrupted images, and labels
+      images = []
+      corrupted_images = []
+      labels = []
+
+      # Iterate through the random indexes
+      for index in random_indexes:
+          image, label = self.cifar10_dataset[index]
+
+          # Select the corresponding corruption image
+          corruption_image = self.corruption_images[self.corruption_type][0]
+
+          # Use the same index for original and corrupted images
+          corrupted_image = corruption_image[index]
+
+          images.append(image)
+          corrupted_images.append(corrupted_image)
+          labels.append(label)
+
+      return images, corrupted_images, labels
+
+
+# Specify the number of images to generate
+num_images = 10
+
+# Specify the corruption type (e.g., 'gaussian_noise', 'motion_blur', etc.)
+corruption_type = 'gaussian_noise'
+
+# Create an instance of the CustomDataset
+dataset = CustomDataset(num_images=num_images, corruption_type=corruption_type)
+dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
 
