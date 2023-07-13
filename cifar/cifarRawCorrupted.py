@@ -1,13 +1,27 @@
 import os
+import urllib.request
+import tarfile
 import numpy as np
 import torch
 import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
-from torch.utils.data import Dataset
+import matplotlib.pyplot as plt
 
+# Specify the file path
+file_name = "/content/CIFAR-10-C.tar"
 
+# Check if the file already exists so we don't end-up downloading them many times
+if not os.path.exists(file_name):
+    # Download CIFAR-10-C dataset
+    url = "https://zenodo.org/record/2535967/files/CIFAR-10-C.tar"
+    urllib.request.urlretrieve(url, file_name)
 
-# Specify the directory path to download the cifar-10-c
+# Extract the dataset if it hasn't been extracted before
+cifar10c_dir = "/content/CIFAR-10-C"
+if not os.path.exists(cifar10c_dir):
+    with tarfile.open(file_name, "r") as tar:
+        tar.extractall()
+
 directory = "/content/CIFAR-10-C"
 
 # Get the list of files in the directory
