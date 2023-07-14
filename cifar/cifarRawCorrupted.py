@@ -139,7 +139,7 @@ class TestDataset(Dataset):
         data_transforms = transforms.Compose([transforms.ToTensor(),
          transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
                                          ])
-        self.cifar10_dataset = CIFAR10(root='./data', train=False, download=True, transform=data_transforms)
+        self.cifar10_dataset = CIFAR10(root='../cifar/data', train=False, download=True, transform=data_transforms)
 
 
 
@@ -174,7 +174,7 @@ class TrainDataset(Dataset):
         data_transform = transforms.Compose([
          transforms.RandomHorizontalFlip(),transforms.ToTensor(),
          transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
-        self.cifar10_dataset = CIFAR10(root='./data', train=True, download=True, transform=data_transform)
+        self.cifar10_dataset = CIFAR10(root='../cifar/data', train=True, download=True, transform=data_transform)
 
 
 
@@ -209,7 +209,7 @@ class CustomDataset(Dataset):
         self.corruption_type = corruption_type
 
         # Load the original CIFAR-10 dataset
-        self.cifar10_dataset = CIFAR10(root='./data', train=False, download=True, transform=transforms.ToTensor())
+        self.cifar10_dataset = CIFAR10(root='../cifar/data', train=False, download=True, transform=transforms.ToTensor())
 
         # Load the corruption images
         directory = "CIFAR-10-C"
