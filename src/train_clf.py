@@ -36,7 +36,7 @@ def evaluate(emb_model, model, val_loader, loss_fn, feature_fn, device='cuda'):
             
 
 
-def train2(emb_model, clf_model, optim, loss_fn, train_loader, val_loader, feature_fn, epochs=30, device='cuda'):
+def train(emb_model, clf_model, optim, loss_fn, train_loader, val_loader, feature_fn, epochs=30, device='cuda'):
     losses = []
     accs = []
     val_losses = []
@@ -55,7 +55,7 @@ def train2(emb_model, clf_model, optim, loss_fn, train_loader, val_loader, featu
         
         for i, batch in enumerate(train_loader, 0):
             imgs, labels = batch
-            imgs, labels = imgs, labels.to(device)
+            imgs, labels = imgs.to(device), labels.to(device)
             optim.zero_grad()
             features = feature_fn(emb_model, imgs).squeeze()
             preds = clf_model(features.float())
@@ -79,7 +79,7 @@ def train2(emb_model, clf_model, optim, loss_fn, train_loader, val_loader, featu
                                        feature_fn=feature_fn, device=device) 
         val_losses.append(eval_loss)
         val_accs.append(eval_acc)
-        print(f' train loss: {ep_loss}, val loss: {eval_loss}, Train accyracy {ep_acc}, val accuracy {eval_acc} ')
+        print(f' train loss: {ep_loss}, val loss: {eval_loss}, Train accuracy {ep_acc}, val accuracy {eval_acc} ')
         
 
     return losses, accs, val_losses, val_accs

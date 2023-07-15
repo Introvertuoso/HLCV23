@@ -8,6 +8,11 @@ from torchvision.datasets import CIFAR10
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+import clip
+
+model, preprocess = clip.load("ViT-B/32", device=device)
+del model
 
 def split_dataset(dataset, train_ratio, val_ratio, test_ratio=0.1):
     dataset_size = len(dataset)
@@ -76,14 +81,14 @@ def split_dataset(dataset, train_ratio, val_ratio, test_ratio=0.1):
 
 
 class TestCorruptDataset(Dataset):
-    def __init__(self, corruption_type="gaussian_noise", severity=2):
+    def __init__(self, corruption_type="gaussian_noise", severity=2, model_name='clip'):
         self.corruption_type = corruption_type
 
         # Load the original CIFAR-10 dataset
         # self.cifar10_dataset = CIFAR10(root='./data', train=False, download=True, transform=transforms.ToTensor())
 
         # Load the corruption images
-        directory = "CIFAR-10-C"
+        directory = "../cifar/CIFAR-10-C"
         files = os.listdir(directory)
         self.corruption_images = {}
         for file in files:
@@ -96,9 +101,16 @@ class TestCorruptDataset(Dataset):
         self.labels = self.labels[(severity-1)*10000: severity*10000]
         self.corruption_images_list = self.corruption_images_list[(severity-1)*10000: severity*10000]
         del  self.corruption_images[corruption_type]
-        self.transform = transforms.Compose([transforms.ToTensor(),
-         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-                                         ])
+         # Load the original CIFAR-10 dataset
+        if model_name=='clip':
+            data_transform = preprocess #transforms.Compose([transforms.ToTensor(),])
+        elif model_name=='resnet':
+            data_transform = transforms.Compose([ transforms.Resize(224), transforms.ToTensor(),
+                                                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+        else:
+            data_transform = transforms.Compose([transforms.ToTensor(),])
+        
+        self.transform = data_transform
 
 
     def __len__(self):
@@ -133,12 +145,16 @@ class TestCorruptDataset(Dataset):
 
 
 class TestDataset(Dataset):
-    def __init__(self):
+    def __init__(self, model_name):
 
-        # Load the original CIFAR-10 dataset
-        data_transforms = transforms.Compose([transforms.ToTensor(),
-         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-                                         ])
+         # Load the original CIFAR-10 dataset
+        if model_name=='clip':
+            data_transforms = preprocess #transforms.Compose([ transforms.ToTensor(),])
+        elif model_name=='resnet':
+            data_transforms = transforms.Compose([transforms.Resize(224), transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+        else:
+            data_transforms = transforms.Compose([transforms.ToTensor(),])
         self.cifar10_dataset = CIFAR10(root='../cifar/data', train=False, download=True, transform=data_transforms)
 
 
@@ -168,12 +184,19 @@ class TestDataset(Dataset):
         return image, label
 
 class TrainDataset(Dataset):
-    def __init__(self):
+    def __init__(self, model_name):
 
         # Load the original CIFAR-10 dataset
-        data_transform = transforms.Compose([
-         transforms.RandomHorizontalFlip(),transforms.ToTensor(),
-         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+        if model_name=='clip':
+            data_transform = preprocess #transforms.Compose([
+        #  transforms.RandomHorizontalFlip(),transforms.ToTensor(),])
+        elif model_name=='resnet':
+            data_transform = transforms.Compose([ transforms.Resize(224),
+            transforms.RandomHorizontalFlip(), transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+        else:
+            data_transform = transforms.Compose([
+                transforms.RandomHorizontalFlip(),transforms.ToTensor(),])
         self.cifar10_dataset = CIFAR10(root='../cifar/data', train=True, download=True, transform=data_transform)
 
 
@@ -267,9 +290,9 @@ corruption_type = 'gaussian_noise'
 
 
 
-def get_original_loaders(batch_size=64):
-    trainset = TrainDataset()
-    test_dataset = TestDataset()
+def get_original_loaders(model_name='clip', batch_size=64):
+    trainset = TrainDataset(model_name=model_name)
+    test_dataset = TestDataset(model_name=model_name)
 
     # # now we split the dataset into train, validation, and test sets
     train_dataset, val_dataset, _ = split_dataset(trainset, train_ratio=0.8, val_ratio=0.2)
@@ -280,11 +303,11 @@ def get_original_loaders(batch_size=64):
     test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     return train_dataloader, val_dataloader, test_dataloader
     
-def get_corrupt_loaders(corruption_type='gaussian_noise', severity=2, batch_size=64):
+def get_corrupt_loaders(corruption_type='gaussian_noise', severity=2, batch_size=64, model_name='clip'):
 
     # Create an instance of the CustomDataset
 
-    test_corrupt_dataset = TestCorruptDataset(corruption_type, severity=severity)
+    test_corrupt_dataset = TestCorruptDataset(corruption_type, severity=severity, model_name=model_name)
     test_corrup_dataloader = torch.utils.data.DataLoader(test_corrupt_dataset, batch_size=batch_size, shuffle=False)
     return test_corrup_dataloader
     
