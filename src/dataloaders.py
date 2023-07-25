@@ -4,7 +4,7 @@ from torchvision import datasets, transforms
 
 # code was inspired from: https://github.com/hendrycks/robustness/blob/master/ImageNet-C/test.py
 def imagenet_c_dataloader(project_root='..', corruption_name='gaussian_noise', severity=1, batch_size=64,
-                          num_workers=1):
+                          num_workers=1, shuffle=False):
     """
     Returns a pytorch DataLoader object of the imagenet-c images using the pytorch ImageFolder convention
     :param project_root: Path to the root of the project (parent directory of the `data` folder)
@@ -34,13 +34,13 @@ def imagenet_c_dataloader(project_root='..', corruption_name='gaussian_noise', s
     return torch.utils.data.DataLoader(
         distorted_dataset,
         batch_size=batch_size,
-        shuffle=False,
+        shuffle=shuffle,
         num_workers=num_workers,
         pin_memory=True
     )
 
 
-def imagenet_dataloader(project_root='..', batch_size=64, num_workers=1):
+def imagenet_dataloader(project_root='..', batch_size=64, num_workers=1, shuffle=False):
     """
     Returns a pytorch DataLoader object of the imagenet images using the pytorch ImageFolder convention
     :param project_root: Path to the root of the project (parent directory of the `data` folder)
@@ -70,7 +70,7 @@ def imagenet_dataloader(project_root='..', batch_size=64, num_workers=1):
     return torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=False,
+        shuffle=shuffle,
         num_workers=num_workers,
         pin_memory=True
     )
