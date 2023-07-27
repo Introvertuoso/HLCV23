@@ -4,7 +4,7 @@ from torchvision import datasets, transforms
 
 # code was inspired from: https://github.com/hendrycks/robustness/blob/master/ImageNet-C/test.py
 def imagenet_c_dataloader(project_root='..', corruption_name='gaussian_noise', severity=1, batch_size=64,
-                          num_workers=1, shuffle=False):
+                          num_workers=1, shuffle=False, transform=None):
     """
     Returns a pytorch DataLoader object of the imagenet-c images using the pytorch ImageFolder convention
     :param project_root: Path to the root of the project (parent directory of the `data` folder)
@@ -18,15 +18,20 @@ def imagenet_c_dataloader(project_root='..', corruption_name='gaussian_noise', s
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
 
+    list = [
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
+    ]
+
+    if transform is not None:
+        list = transform.transforms
+
     # Dataset object using the ImageFolder convention with crop and normalization applied
     distorted_dataset = datasets.ImageFolder(
         root=f'{project_root}/data/imagenet-c/' + corruption_name + '/' + str(severity),
         transform=transforms.Compose(
-            [
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                transforms.Normalize(mean, std)
-            ]
+            list
         )
     )
 
@@ -40,7 +45,7 @@ def imagenet_c_dataloader(project_root='..', corruption_name='gaussian_noise', s
     )
 
 
-def imagenet_dataloader(project_root='..', batch_size=64, num_workers=1, shuffle=False):
+def imagenet_dataloader(project_root='..', batch_size=64, num_workers=1, shuffle=False, transform=None):
     """
     Returns a pytorch DataLoader object of the imagenet images using the pytorch ImageFolder convention
     :param project_root: Path to the root of the project (parent directory of the `data` folder)
@@ -53,16 +58,21 @@ def imagenet_dataloader(project_root='..', batch_size=64, num_workers=1, shuffle
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
 
+    list = [
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
+    ]
+
+    if transform is not None:
+        list = transform.transforms
+
     # Dataset object using the ImageFolder convention with crop and normalization applied
     dataset = datasets.ImageFolder(
         root=f'{project_root}/data/imagenet/',
         transform=transforms.Compose(
-            [
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                transforms.Normalize(mean, std)
-            ]
+            list
         )
     )
 
