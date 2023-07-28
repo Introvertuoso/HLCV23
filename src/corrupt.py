@@ -1,3 +1,6 @@
+# This uses the imagenet_c package; installed from
+# https://github.com/hendrycks/robustness/tree/master/ImageNet-C/imagenet_c
+
 import os
 
 import numpy as np
