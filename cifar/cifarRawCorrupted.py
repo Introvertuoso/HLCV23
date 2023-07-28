@@ -7,6 +7,7 @@ import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
+import PIL.Image as Image
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 import clip
@@ -80,6 +81,24 @@ def split_dataset(dataset, train_ratio, val_ratio, test_ratio=0.1):
 #     print()
 
 
+def get_data_transforms(model_name):
+    if model_name=='clip':
+        data_transform = preprocess #transforms.Compose([transforms.ToTensor(),])
+    elif model_name=='resnet':
+        data_transform = transforms.Compose([ transforms.Resize(224), transforms.ToTensor(),
+                                                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+    elif model_name=='dino':
+        data_transform = transforms.Compose([
+                transforms.Resize(256, interpolation=3),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+            ])
+    else:
+        data_transform = transforms.Compose([transforms.ToTensor(),])
+    
+    return data_transform
+
 class TestCorruptDataset(Dataset):
     def __init__(self, corruption_type="gaussian_noise", severity=2, model_name='clip'):
         self.corruption_type = corruption_type
@@ -89,28 +108,33 @@ class TestCorruptDataset(Dataset):
 
         # Load the corruption images
         directory = "../cifar/CIFAR-10-C"
-        files = os.listdir(directory)
-        self.corruption_images = {}
-        for file in files:
-            corruption_type = os.path.splitext(file)[0]
-            numpy_array = np.load(os.path.join(directory, file))
-            self.corruption_images[corruption_type] = numpy_array
+        # files = os.listdir(directory)
+        corrupt_ims = np.load(os.path.join(directory, corruption_type+'.npy'))
+        labels = np.load(os.path.join(directory, 'labels'+'.npy'))
+        # self.corruption_images = {}
+        # for file in files:
+        #     corruption_type = os.path.splitext(file)[0]
+        #     numpy_array = np.load(os.path.join(directory, file))
+        #     self.corruption_images[corruption_type] = numpy_array
         
-        self.corruption_images_list = self.corruption_images[corruption_type].copy()
-        self.labels = self.corruption_images['labels'].copy()
+        # self.corruption_images_list = self.corruption_images[corruption_type].copy()
+        # print(corrupt_ims.shape)
+        self.labels =labels.copy()
         self.labels = self.labels[(severity-1)*10000: severity*10000]
-        self.corruption_images_list = self.corruption_images_list[(severity-1)*10000: severity*10000]
-        del  self.corruption_images[corruption_type]
-         # Load the original CIFAR-10 dataset
-        if model_name=='clip':
-            data_transform = preprocess #transforms.Compose([transforms.ToTensor(),])
-        elif model_name=='resnet':
-            data_transform = transforms.Compose([ transforms.Resize(224), transforms.ToTensor(),
-                                                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
-        else:
-            data_transform = transforms.Compose([transforms.ToTensor(),])
+        self.corruption_images_list = corrupt_ims[(severity-1)*10000: severity*10000]
         
-        self.transform = data_transform
+        ## cvt to pil 
+        pil_ims_list = []
+        for im in self.corruption_images_list:
+            pil_ims_list.append(Image.fromarray(im))
+        
+        self.corruption_images_list = pil_ims_list
+             
+        # del  self.corruption_images[corruption_type]
+         # Load the original CIFAR-10 dataset
+
+        
+        self.transform = get_data_transforms(model_name=model_name)
 
 
     def __len__(self):
@@ -148,13 +172,8 @@ class TestDataset(Dataset):
     def __init__(self, model_name):
 
          # Load the original CIFAR-10 dataset
-        if model_name=='clip':
-            data_transforms = preprocess #transforms.Compose([ transforms.ToTensor(),])
-        elif model_name=='resnet':
-            data_transforms = transforms.Compose([transforms.Resize(224), transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
-        else:
-            data_transforms = transforms.Compose([transforms.ToTensor(),])
+        data_transforms = get_data_transforms(model_name=model_name)
+            
         self.cifar10_dataset = CIFAR10(root='../cifar/data', train=False, download=True, transform=data_transforms)
 
 
@@ -187,17 +206,9 @@ class TrainDataset(Dataset):
     def __init__(self, model_name):
 
         # Load the original CIFAR-10 dataset
-        if model_name=='clip':
-            data_transform = preprocess #transforms.Compose([
-        #  transforms.RandomHorizontalFlip(),transforms.ToTensor(),])
-        elif model_name=='resnet':
-            data_transform = transforms.Compose([ transforms.Resize(224),
-            transforms.RandomHorizontalFlip(), transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
-        else:
-            data_transform = transforms.Compose([
-                transforms.RandomHorizontalFlip(),transforms.ToTensor(),])
-        self.cifar10_dataset = CIFAR10(root='../cifar/data', train=True, download=True, transform=data_transform)
+        data_transforms = get_data_transforms(model_name=model_name)
+
+        self.cifar10_dataset = CIFAR10(root='../cifar/data', train=True, download=True, transform=data_transforms)
 
 
 
