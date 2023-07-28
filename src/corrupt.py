@@ -34,11 +34,11 @@ for noise in tqdm(['gaussian_noise', 'impulse_noise', 'shot_noise', 'speckle_noi
                 os.mkdir(label)
             input = os.path.join(source, cls)
             for img in tqdm(os.listdir(input), leave=False, desc='Images'):
-                image = Image.open(os.path.join(input, img)).convert('RGB')
-                image = transform(image)
-                image = np.array(image)
-                image = corrupt(image, severity=sev, corruption_name=noise)
                 save_path = os.path.join(label, img)
                 # remove this condition if you wish to overwrite
                 if not os.path.exists(save_path):
+                    image = Image.open(os.path.join(input, img)).convert('RGB')
+                    image = transform(image)
+                    image = np.array(image)
+                    image = corrupt(image, severity=sev, corruption_name=noise)
                     Image.fromarray(image).save(save_path, quality=85, optimize=True)
