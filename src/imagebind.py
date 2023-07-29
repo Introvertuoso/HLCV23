@@ -21,7 +21,12 @@ def define_model(device):
 
 
 def preprocess(raw_image, device):
-    data_transform = transforms.Compose(
+    data_transform = get_transform()
+    return torch.stack([data_transform(raw_image).to(device)], dim=0)
+
+
+def get_transform():
+    return transforms.Compose(
         [
             transforms.Resize(
                 224, interpolation=transforms.InterpolationMode.BICUBIC
@@ -34,4 +39,3 @@ def preprocess(raw_image, device):
             ),
         ]
     )
-    return torch.stack([data_transform(raw_image).to(device)], dim=0)
