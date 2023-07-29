@@ -11,9 +11,25 @@ import PIL.Image as Image
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 import clip
-
+## CLIP preprocess 
 model, preprocess = clip.load("ViT-B/32", device=device)
 del model
+
+from lavis.models import load_model_and_preprocess
+
+
+## Blip preprocess 
+m , vis_processors, o = load_model_and_preprocess(
+        name="blip_feature_extractor",
+        model_type="base",
+        is_eval=True,
+        device=device
+    )
+
+blip_transform = vis_processors["eval"].transform
+
+del m
+del o
 
 def split_dataset(dataset, train_ratio, val_ratio, test_ratio=0.1):
     dataset_size = len(dataset)
@@ -94,6 +110,9 @@ def get_data_transforms(model_name):
                 transforms.ToTensor(),
                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
             ])
+    
+    elif model_name=='blip':
+        data_transform = blip_transform
     else:
         data_transform = transforms.Compose([transforms.ToTensor(),])
     
