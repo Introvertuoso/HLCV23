@@ -16,7 +16,7 @@ def get_transform():
 
 def get_image_features(model, image):
     with torch.no_grad():
-        features = model.forward_features(image)
+        features = model.forward_features(image)[:, 0, :]
     return features
 
 
