@@ -5,12 +5,14 @@ from imagebind.models.imagebind_model import ModalityType
 import torch
 from torchvision.transforms import transforms
 
+feature_dim = 1024
 
-def get_image_features(raw_image, device):
-    image = preprocess(raw_image, device)
-    model = define_model(device)
+
+def get_image_features(model, img_tensor, device='cuda'):
+    # image = preprocess(raw_image, device)
+    # model = define_model(device)
     with torch.no_grad():
-        return model({ModalityType.VISION: image})[ModalityType.VISION]
+        return model({ModalityType.VISION: img_tensor.to(device)})[ModalityType.VISION]
 
 
 def define_model(device):
