@@ -1,4 +1,5 @@
 import torch
+from tqdm.notebook import tqdm
 import torch.nn.functional as F
 
 @torch.no_grad()
@@ -7,7 +8,7 @@ def extract_ds_features(model, data_loader, get_features_fn,  device):
     pass the torch model and the dataloader along with the get_img_features function 
     '''
     feature_list, labels_list = [], []
-    for batch in data_loader: 
+    for batch in tqdm(data_loader, leave=False):
         img_tensor, labels = batch[0].to(device), batch[1].to(device)
         feature_tensor = get_features_fn(model, img_tensor)
         feature_list.append(feature_tensor)
@@ -29,12 +30,12 @@ def knn_classifier(train_features, train_labels, test_features, test_labels, k=5
     '''
     top1, top5, total = 0.0, 0.0, 0
     train_features = train_features.t()
-    print(train_features.shape)
+    # print(train_features.shape)
     num_test_images, num_chunks = test_labels.shape[0], 100
     imgs_per_chunk = num_test_images // num_chunks
     retrieval_one_hot = torch.zeros(k, num_classes).to(torch.int64).to(train_features.device)
     all_idxs = torch.arange(test_labels.shape[0])
-    for idx in range(0, num_test_images, imgs_per_chunk):
+    for idx in tqdm(range(0, num_test_images, imgs_per_chunk), leave=False):
         # get the features for test images
         si, ei =  idx, min((idx + imgs_per_chunk), num_test_images)
         ixs = (torch.arange(si, ei))
