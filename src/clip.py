@@ -17,7 +17,7 @@ import clip
 def define_model(device='cuda'):
     model, preprocess = clip.load("ViT-B/16", device=device)
     model = model.eval()
-    return model
+    return model, preprocess
 
 
 # def get_image_features(model, img_tensor):
@@ -25,10 +25,13 @@ def define_model(device='cuda'):
 #     image_features = model.get_image_features(**inputs)
 #     return image_features
 
-def get_image_features(model, img_tensor, device='cuda'):
+def get_image_features(model, img_tensor):
     with torch.no_grad():
-        image_features = model.encode_image(img_tensor.to(device))
+        image_features = model.encode_image(img_tensor)
     return image_features.float()
+
+    
+    
 
 
 if __name__ == '__main__':

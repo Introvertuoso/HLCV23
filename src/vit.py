@@ -5,6 +5,7 @@ import torch
 import timm
 
 
+feature_dim = 768
 def get_transform():
     return transforms.Compose([
         transforms.Resize(256),
@@ -16,7 +17,8 @@ def get_transform():
 
 def get_image_features(model, image):
     with torch.no_grad():
-        features = model.forward_features(image)[:, 0, :]
+        features = model.forward_features(image)
+        # print(features.shape)
     return features
 
 

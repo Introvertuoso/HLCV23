@@ -12,7 +12,7 @@ import PIL.Image as Image
 device = "cuda" if torch.cuda.is_available() else "cpu"
 import clip
 ## CLIP preprocess 
-model, preprocess = clip.load("ViT-B/32", device=device)
+model, preprocess = clip.load("ViT-B/16", device=device)
 del model
 
 from lavis.models import load_model_and_preprocess
@@ -101,8 +101,13 @@ def get_data_transforms(model_name):
     if model_name=='clip':
         data_transform = preprocess #transforms.Compose([transforms.ToTensor(),])
     elif model_name=='resnet':
-        data_transform = transforms.Compose([ transforms.Resize(224), transforms.ToTensor(),
-                                                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+        data_transform = transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+            ])    
+        
     elif model_name=='dino':
         data_transform = transforms.Compose([
                 transforms.Resize(256, interpolation=3),
@@ -125,6 +130,14 @@ def get_data_transforms(model_name):
                 mean=(0.48145466, 0.4578275, 0.40821073),
                 std=(0.26862954, 0.26130258, 0.27577711),
             ),])
+    
+    elif model_name=='vit':
+        data_transform = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),])
+        
     else:
         data_transform = transforms.Compose([transforms.ToTensor(),])
     

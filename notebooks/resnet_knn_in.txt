@@ -1,0 +1,137 @@
+/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet50_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet50_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+cuda:1
+  0%|          | 0/5 [00:00<?, ?it/s]
+  0%|          | 0/196 [00:00<?, ?it/s][A
+  1%|          | 1/196 [00:04<15:24,  4.74s/it][A
+  1%|          | 2/196 [00:06<09:07,  2.82s/it][A
+  2%|▏         | 3/196 [00:09<09:14,  2.87s/it][A
+  2%|▏         | 4/196 [00:11<08:51,  2.77s/it][A
+  3%|▎         | 5/196 [00:14<09:03,  2.85s/it][A
+  3%|▎         | 6/196 [00:18<09:36,  3.03s/it][A
+  4%|▎         | 7/196 [00:20<09:14,  2.94s/it][A
+  4%|▍         | 8/196 [00:23<09:03,  2.89s/it][A
+  5%|▍         | 9/196 [00:26<08:51,  2.84s/it][A
+  5%|▌         | 10/196 [00:29<08:44,  2.82s/it][A
+  6%|▌         | 11/196 [00:32<08:54,  2.89s/it][A
+  6%|▌         | 12/196 [00:34<08:22,  2.73s/it][A
+  7%|▋         | 13/196 [00:37<08:35,  2.82s/it][A
+  7%|▋         | 14/196 [00:40<08:34,  2.83s/it][A
+  8%|▊         | 15/196 [00:43<08:30,  2.82s/it][A
+  8%|▊         | 16/196 [00:46<08:24,  2.80s/it][A
+  9%|▊         | 17/196 [00:48<08:25,  2.83s/it][A
+  9%|▉         | 18/196 [00:52<08:39,  2.92s/it][A
+ 10%|▉         | 19/196 [00:54<08:24,  2.85s/it][A
+ 10%|█         | 20/196 [00:57<08:30,  2.90s/it][A
+ 11%|█         | 21/196 [01:00<08:21,  2.87s/it][A
+ 11%|█         | 22/196 [01:03<08:14,  2.84s/it][A
+ 12%|█▏        | 23/196 [01:06<08:19,  2.89s/it][A
+ 12%|█▏        | 24/196 [01:09<08:22,  2.92s/it][A
+ 13%|█▎        | 25/196 [01:11<08:04,  2.83s/it][A
+ 13%|█▎        | 26/196 [01:14<08:02,  2.84s/it][A
+ 14%|█▍        | 27/196 [01:17<07:57,  2.83s/it][A
+ 14%|█▍        | 28/196 [01:20<07:55,  2.83s/it][A
+ 15%|█▍        | 29/196 [01:23<07:46,  2.79s/it][A
+ 15%|█▌        | 30/196 [01:25<07:29,  2.71s/it][A
+ 16%|█▌        | 31/196 [01:28<07:34,  2.75s/it][A
+ 16%|█▋        | 32/196 [01:31<07:27,  2.73s/it][A
+ 17%|█▋        | 33/196 [01:33<07:21,  2.71s/it][A
+ 17%|█▋        | 34/196 [01:37<07:44,  2.87s/it][A
+ 18%|█▊        | 35/196 [01:40<07:44,  2.88s/it][A
+ 18%|█▊        | 36/196 [01:42<07:31,  2.82s/it][A
+ 19%|█▉        | 37/196 [01:45<07:23,  2.79s/it][A
+ 19%|█▉        | 38/196 [01:47<07:11,  2.73s/it][A
+ 20%|█▉        | 39/196 [01:50<07:15,  2.77s/it][A
+ 20%|██        | 40/196 [01:53<07:28,  2.88s/it][A
+ 21%|██        | 41/196 [01:57<07:38,  2.96s/it][A
+ 21%|██▏       | 42/196 [02:00<07:44,  3.02s/it][A
+ 22%|██▏       | 43/196 [02:03<07:45,  3.04s/it][A
+ 22%|██▏       | 44/196 [02:06<07:36,  3.00s/it][A
+ 23%|██▎       | 45/196 [02:09<07:24,  2.95s/it][A
+ 23%|██▎       | 46/196 [02:11<07:17,  2.92s/it][A
+ 24%|██▍       | 47/196 [02:15<07:21,  2.96s/it][A
+ 24%|██▍       | 48/196 [02:17<07:10,  2.91s/it][A
+ 25%|██▌       | 49/196 [02:20<06:49,  2.79s/it][A
+ 26%|██▌       | 50/196 [02:23<07:01,  2.89s/it][A
+ 26%|██▌       | 51/196 [02:26<07:07,  2.95s/it][A
+ 27%|██▋       | 52/196 [02:29<07:04,  2.95s/it][A
+ 27%|██▋       | 53/196 [02:32<07:04,  2.97s/it][A
+ 28%|██▊       | 54/196 [02:35<06:49,  2.88s/it][A
+ 28%|██▊       | 55/196 [02:38<06:47,  2.89s/it][A
+ 29%|██▊       | 56/196 [02:40<06:26,  2.76s/it][A
+ 29%|██▉       | 57/196 [02:43<06:33,  2.83s/it][A
+ 30%|██▉       | 58/196 [02:46<06:29,  2.82s/it][A
+ 30%|███       | 59/196 [02:49<06:40,  2.93s/it][A
+ 31%|███       | 60/196 [02:52<06:27,  2.85s/it][A
+ 31%|███       | 61/196 [02:55<06:33,  2.91s/it][A
+ 32%|███▏      | 62/196 [02:58<06:31,  2.92s/it][A
+ 32%|███▏      | 63/196 [03:01<06:31,  2.94s/it][A
+ 33%|███▎      | 64/196 [03:04<06:37,  3.01s/it][A
+ 33%|███▎      | 65/196 [03:07<06:28,  2.96s/it][A
+ 34%|███▎      | 66/196 [03:09<06:14,  2.88s/it][A
+ 34%|███▍      | 67/196 [03:12<06:01,  2.80s/it][A
+ 35%|███▍      | 68/196 [03:15<05:58,  2.80s/it][A
+ 35%|███▌      | 69/196 [03:17<05:45,  2.72s/it][A
+ 36%|███▌      | 70/196 [03:20<05:55,  2.82s/it][A
+ 36%|███▌      | 71/196 [03:23<05:57,  2.86s/it][A
+ 37%|███▋      | 72/196 [03:26<05:53,  2.85s/it][A
+ 37%|███▋      | 73/196 [03:29<05:56,  2.90s/it][A
+ 38%|███▊      | 74/196 [03:32<05:41,  2.80s/it][A
+ 38%|███▊      | 75/196 [03:35<05:45,  2.85s/it][A
+ 39%|███▉      | 76/196 [03:37<05:35,  2.79s/it][A
+ 39%|███▉      | 77/196 [03:40<05:33,  2.80s/it][A
+ 40%|███▉      | 78/196 [03:43<05:19,  2.71s/it][A
+ 40%|████      | 79/196 [03:46<05:23,  2.76s/it][A
+ 41%|████      | 80/196 [03:49<05:26,  2.81s/it][A
+ 41%|████▏     | 81/196 [03:51<05:20,  2.79s/it][A
+ 42%|████▏     | 82/196 [03:54<05:12,  2.74s/it][A
+ 42%|████▏     | 83/196 [03:57<05:06,  2.71s/it][A
+ 43%|████▎     | 84/196 [04:00<05:19,  2.85s/it][A
+ 43%|████▎     | 85/196 [04:03<05:28,  2.96s/it][A
+ 44%|████▍     | 86/196 [04:06<05:19,  2.91s/it][A
+ 44%|████▍     | 87/196 [04:08<05:13,  2.88s/it][A
+ 45%|████▍     | 88/196 [04:12<05:17,  2.94s/it][A
+ 45%|████▌     | 89/196 [04:14<05:02,  2.83s/it][A
+ 46%|████▌     | 90/196 [04:17<05:08,  2.91s/it][A
+ 46%|████▋     | 91/196 [04:20<05:04,  2.90s/it][A
+ 47%|████▋     | 92/196 [04:23<04:59,  2.88s/it][A
+ 47%|████▋     | 93/196 [04:26<05:05,  2.97s/it][A
+ 48%|████▊     | 94/196 [04:29<04:52,  2.87s/it][A
+                                                [A  0%|          | 0/5 [04:32<?, ?it/s]
+Traceback (most recent call last):
+  File "/DS/brn-vision/work/side_pr/HLCV23/notebooks/resnet_knn_imagent.py", line 27, in <module>
+    features, labels = extract_ds_features(model, loader, get_image_features, device)
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torch/autograd/grad_mode.py", line 27, in decorate_context
+    return func(*args, **kwargs)
+  File "/DS/brn-vision/work/side_pr/HLCV23/notebooks/../src/knn_clf_score.py", line 12, in extract_ds_features
+    for batch in tqdm(data_loader, leave=False):
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/tqdm/std.py", line 1178, in __iter__
+    for obj in iterable:
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 628, in __next__
+    data = self._next_data()
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1333, in _next_data
+    return self._process_data(data)
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1359, in _process_data
+    data.reraise()
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torch/_utils.py", line 543, in reraise
+    raise exception
+PIL.UnidentifiedImageError: Caught UnidentifiedImageError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torch/utils/data/_utils/worker.py", line 302, in _worker_loop
+    data = fetcher.fetch(index)
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torch/utils/data/_utils/fetch.py", line 58, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torch/utils/data/_utils/fetch.py", line 58, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torchvision/datasets/folder.py", line 229, in __getitem__
+    sample = self.loader(path)
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torchvision/datasets/folder.py", line 268, in default_loader
+    return pil_loader(path)
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/torchvision/datasets/folder.py", line 247, in pil_loader
+    img = Image.open(f)
+  File "/home/omoussa/miniconda3/envs/brn/lib/python3.9/site-packages/PIL/Image.py", line 3283, in open
+    raise UnidentifiedImageError(msg)
+PIL.UnidentifiedImageError: cannot identify image file <_io.BufferedReader name='../imagenet_data/gaussian_noise/1/n02979186/ILSVRC2012_val_00042347.JPEG'>
+
