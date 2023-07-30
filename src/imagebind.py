@@ -6,9 +6,7 @@ import torch
 from torchvision.transforms import transforms
 
 
-def get_image_features(raw_image, device):
-    image = preprocess(raw_image, device)
-    model = define_model(device)
+def get_image_features(model, image):
     with torch.no_grad():
         return model({ModalityType.VISION: image})[ModalityType.VISION]
 
