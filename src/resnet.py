@@ -6,7 +6,7 @@ from torchvision.transforms import transforms
 
 
 def define_model(device='cuda'):
-    resnet152 = models.resnet50(pretrained=True).eval()
+    resnet152 = models.resnet152(pretrained=True).eval()
     modules=list(resnet152.children())[:-1]
     resnet152 = nn.Sequential(*modules).eval()
     for p in resnet152.parameters():
