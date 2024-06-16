@@ -6,7 +6,7 @@ To be added later.
 ## Benchmarking process
 To be added later
 
-### File Structure
+## File Structure
 
 - `configs` contains any model parameters used in the experiments.
 - `data` contains all the necessary datasets.
@@ -33,11 +33,9 @@ To be added later
 
 ## Usage
 
-### Evaluation script
-
 Use `evaluate.py` with the following arguments.
 
-#### Command format
+### Command format
 
 ```
 python evaluation.py --model [MODEL] --dataset [DATASET] --corruption [CORRUPTION] --device [DEVICE]
@@ -47,7 +45,7 @@ python evaluation.py --model [MODEL] --dataset [DATASET] --corruption [CORRUPTIO
 - `--corruption`: Image corruption type. (choices: `brightness`, `contrast`, `defocus_blur`, `elastic_transform`, `fog`, `frost`, `gaussian_noise`, `glass_blur`, `impulse_noise`, `motion_blur`, `pixelate`, `shot_noise`, `snow`, `zoom_blur`, default= `jpeg_compression`). Applicable only to corrupted datasets (ending with `-c`).
 - `--device`: Computation device (default: `cpu`).
 
-#### Example
+### Example
 
 ```
 python evaluation.py --model clip --dataset tiny-c --corruption jpeg_compression --device cuda:0
