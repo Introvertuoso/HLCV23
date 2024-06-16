@@ -16,20 +16,22 @@ To be added later
 - `references` contains any reference material (e.g papers, notes, slide decks, books/chapters, etc.).
 - `results` contains any reports, tables, plots, or outputs organized in folders corresponding to experiment notebooks.
 - `src` is where all the source code lives.
-- `keynote` contains all the keynote files.
 - `tests` contains any code testing routines.
-- `writeup` contains all the writeup files.
+
+[//]: # (- `keynote` contains all the keynote files.)
+[//]: # (- `writeup` contains all the writeup files.)
 
 ## Installation
 
 - Clone this repository. Name the folder `noise-modalities`.
 - Create a virtual environment (call it `.venv` for consistency), activate it, and install the requirements.
 
-
+```
     cd noise-modalities
     python -m venv .venv
     source .venv/bin/activate
     pip install -r requirements.txt
+```
 
 ## Usage
 
