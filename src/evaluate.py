@@ -16,7 +16,7 @@ def main(args):
     for mdl in args.model:
         # Load model
         if mdl == 'clip':
-            model = models.clip.load_model(device=args.device)
+            model, transform = models.clip.define_model(device=args.device)
         else:
             print(f'Model {args.model} not supported')
             continue
@@ -29,10 +29,9 @@ def main(args):
             if ds == 'tiny':
                 http_response = urlopen('http://cs231n.stanford.edu/tiny-imagenet-200.zip')
                 ZipFile(BytesIO(http_response.read())).extractall(path=path)
-                clean_data = dataloaders.tiny_imagenet()
+                clean = dataloaders.tiny_imagenet.clean()
 
                 # Train classifier on clean data
-
 
                 http_response = urlopen('https://zenodo.org/records/2536630/files/Tiny-ImageNet-C.tar?download=1')
                 tarfile.open(http_response, mode="r|gz").extractall(path=os.path.join(path, '-c'))
@@ -40,7 +39,7 @@ def main(args):
                     # Set corruption
                     for sev in [1, 2, 3, 4, 5]:
                         # Set severity
-                        corrupted_data = dataloaders.tiny_imagenet_c(corruption=cor, severity=sev)
+                        corrupt = dataloaders.tiny_imagenet.corrupt(corruption=cor, severity=sev)
 
                         # Test on corrupted data
 
@@ -55,10 +54,14 @@ def main(args):
                 print(f'Dataset {args.dataset} not supported')
                 continue
 
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Script for evaluating model performance on a given dataset and corruption type.")
-    parser.add_argument('--model', type=str, choices=['clip'], action='extend', nargs='+', required=True, help="Model name")
-    parser.add_argument('--dataset', type=str, choices=['tiny'], action='extend', nargs='+', required=True, help="Dataset name")
+    parser = argparse.ArgumentParser(
+        description="Script for evaluating model performance on a given dataset and corruption type.")
+    parser.add_argument('--model', type=str, choices=['clip'], action='extend', nargs='+', required=True,
+                        help="Model name")
+    parser.add_argument('--dataset', type=str, choices=['tiny'], action='extend', nargs='+', required=True,
+                        help="Dataset name")
     parser.add_argument('--corruption', type=str, choices=[
         'brightness',
         'contrast',
