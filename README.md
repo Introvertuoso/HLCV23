@@ -42,9 +42,9 @@ Use `evaluate.py` with the following arguments.
 ```
 python evaluation.py --model [MODEL] --dataset [DATASET] --corruption [CORRUPTION] --device [DEVICE]
 ```
-- `--model`: Model name (choices: `clip`).
-- `--dataset`: Dataset name (choices: `tiny`, `tiny-c`).
-- `--corruption`: Image corruption type. (choices: `brightness`, `contrast`, `defocus_blur`, `elastic_transform`, `fog`, `frost`, `gaussian_noise`, `glass_blur`, `impulse_noise`, `motion_blur`, `pixelate`, `shot_noise`, `snow`, `zoom_blur`, default= `jpeg_compression`). Applicable only to corrupted datasets (ending with `-c`).
+- `--model`: Model name(s) (choices: `clip`).
+- `--dataset`: Dataset name(s) (choices: `tiny`).
+- `--corruption`: Image corruption type(s). (choices: `brightness`, `contrast`, `defocus_blur`, `elastic_transform`, `fog`, `frost`, `gaussian_noise`, `glass_blur`, `impulse_noise`, `motion_blur`, `pixelate`, `shot_noise`, `snow`, `zoom_blur`, default= `jpeg_compression`). Applicable only to corrupted datasets (ending with `-c`).
 - `--device`: Computation device (default: `cpu`).
 
 ### Example

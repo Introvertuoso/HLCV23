@@ -3,7 +3,7 @@ import torch
 from torchvision import datasets, transforms
 
 # code was inspired from: https://github.com/hendrycks/robustness/blob/master/ImageNet-C/test.py
-def corrupt(project_root='../data/tiny', corruption_name='gaussian_noise', severity=1, batch_size=64,
+def corrupt(project_root, corruption_name='gaussian_noise', severity=1, batch_size=64,
           num_workers=1, shuffle=False, transform=None):
     """
     Returns a pytorch DataLoader object of the imagenet-c images using the pytorch ImageFolder convention
@@ -39,7 +39,7 @@ def corrupt(project_root='../data/tiny', corruption_name='gaussian_noise', sever
         shuffle=shuffle,
         num_workers=num_workers,
         pin_memory=True
-    )
+    ), len(distorted_dataset.classes)
 
 def clean(project_root='../imagenet_data', batch_size=64, num_workers=1, shuffle=False, transform=None):
     """

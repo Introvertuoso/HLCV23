@@ -1,84 +1,125 @@
 import argparse
+import json
 import os
+import time
+
 import torch
 import tarfile
 import models
 import dataloaders
 
 from urllib.request import urlopen
+from tqdm import tqdm
 from io import BytesIO
 from zipfile import ZipFile
+from utils import extract_ds_features, knn_classifier
 
+model_choices = [
+    'clip',
+]
+dataset_choices = [
+    'tiny',
+]
+corruption_choices = [
+    'brightness',
+    'contrast',
+    'defocus_blur',
+    'elastic_transform',
+    'fog',
+    'frost',
+    'gaussian_noise',
+    'glass_blur',
+    'impulse_noise',
+    'motion_blur',
+    'pixelate',
+    'shot_noise',
+    'snow',
+    'zoom_blur',
+    'jpeg_compression',
+]
+
+def validate_argument(arg: list, options: list):
+    to_remove = []
+    for i in arg:
+        if i not in options:
+            to_remove.append(i)
+            print(f'{i} not supported and will be skipped.')
+    for i in to_remove:
+        arg.remove(i)
+    return arg
 
 def main(args):
     # Adapted from https://github.com/sail-sg/MMCBench/tree/main
 
-    for mdl in args.model:
+    # Check arguments
+    model_list = validate_argument(args.model, model_choices)
+    dataset_list = validate_argument(args.dataset, dataset_choices)
+    corruption_list = validate_argument(args.corruption, corruption_choices)
+
+    for mdl in model_list:
+        # Set results up
+        res = {
+            'torch_version': torch.__version__,
+            'model': '',
+            'config': '',
+            'dataset': '',
+            'corruption': '',
+            'device': args.device,
+            'severity1': {},
+            'severity2': {},
+            'severity3': {},
+            'severity4': {},
+            'severity5': {},
+            'time_elapsed': 0
+        }
+
         # Load model
         if mdl == 'clip':
-            model, transform = models.clip.define_model(device=args.device)
-        else:
-            print(f'Model {args.model} not supported')
-            continue
+            model, config, transform, get_image_features = models.clip.define_model(device=args.device)
+            res['model'] = mdl
+            res['config'] = config
 
-        for ds in args.dataset:
+        for ds in dataset_list:
             # Load data
             path = os.path.join('../data', ds)
-            if not os.path.exists(path):
-                os.makedirs(os.path.join(path))
+            c_path = os.path.join(path, '-c')
             if ds == 'tiny':
-                http_response = urlopen('http://cs231n.stanford.edu/tiny-imagenet-200.zip')
-                ZipFile(BytesIO(http_response.read())).extractall(path=path)
-                clean = dataloaders.tiny_imagenet.clean()
+                if not os.path.exists(path):
+                    os.makedirs(os.path.join(path))
+                    http_response = urlopen('http://cs231n.stanford.edu/tiny-imagenet-200.zip')
+                    ZipFile(BytesIO(http_response.read())).extractall(path=path)
+                if not os.path.exists(c_path):
+                    http_response = urlopen('https://zenodo.org/records/2536630/files/Tiny-ImageNet-C.tar?download=1')
+                    tarfile.open(http_response, mode="r|gz").extractall(path=c_path)
+                res['dataset'] = ds
 
-                # Train classifier on clean data
-
-                http_response = urlopen('https://zenodo.org/records/2536630/files/Tiny-ImageNet-C.tar?download=1')
-                tarfile.open(http_response, mode="r|gz").extractall(path=os.path.join(path, '-c'))
-                for cor in args.corruption:
+                for cor in corruption_list:
                     # Set corruption
-                    for sev in [1, 2, 3, 4, 5]:
-                        # Set severity
-                        corrupt = dataloaders.tiny_imagenet.corrupt(corruption=cor, severity=sev)
-
-                        # Test on corrupted data
-
-                    # Save results (train + test)
-                    directory = f"results/{args.model}"
+                    res['corruption'] = cor
+                    directory = os.path.join('../results/', mdl, ds, cor)
                     os.makedirs(directory, exist_ok=True)
 
-                    # Print  results (train + test)
+                    start = time.time()
+                    for sev in tqdm([1, 2, 3, 4, 5]):
+                        # Compute KNN classifier for each severity
+                        corrupt, num_classes = dataloaders.tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev, transform=transform)
+                        features, labels = extract_ds_features(model, corrupt, get_image_features, args.device)
+                        res['severity'+str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
+                        res['time'] = time.time() - start
 
+                        # Save results
+                        with open(os.path.join(directory, time.asctime())+'.json', "x") as outfile:
+                            json.dump(res, outfile)
 
-            else:
-                print(f'Dataset {args.dataset} not supported')
-                continue
-
+                    # Print final results
+                    print(res)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Script for evaluating model performance on a given dataset and corruption type.")
-    parser.add_argument('--model', type=str, choices=['clip'], action='extend', nargs='+', required=True,
-                        help="Model name")
-    parser.add_argument('--dataset', type=str, choices=['tiny'], action='extend', nargs='+', required=True,
-                        help="Dataset name")
-    parser.add_argument('--corruption', type=str, choices=[
-        'brightness',
-        'contrast',
-        'defocus_blur',
-        'elastic_transform',
-        'fog',
-        'frost',
-        'gaussian_noise',
-        'glass_blur',
-        'impulse_noise',
-        'motion_blur',
-        'pixelate',
-        'shot_noise',
-        'snow',
-        'zoom_blur',
-        'jpeg_compression'
-    ], action='extend', nargs='+', default=['jpeg_compression'], help="Image corruption type")
+        description="Script for evaluating model performance(s) on a given dataset(s) and corruption type(s).")
+    parser.add_argument('--model', type=str, choices=model_choices, action='extend', nargs='+', required=True, help="Model name(s)")
+    parser.add_argument('--dataset', type=str, choices=dataset_choices, action='extend', nargs='+', required=True, help="Dataset name(s)")
+    parser.add_argument('--corruption', type=str, choices=corruption_choices, action='extend', nargs='+', default=['jpeg_compression'], help="Image corruption type(s)")
     parser.add_argument('--device', type=str, default='cpu', help="Computation device")
     args = parser.parse_args()
 
