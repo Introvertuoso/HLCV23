@@ -11,12 +11,12 @@ feature_dim = 512
 #     model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
 #     return model
 
-import clip
+import CLIP  # had to rename the package in site-package to all caps to avoid conflict
 
 
 def define_model(device='cuda'):
     backbone = "ViT-B/16"
-    model, preprocess = clip.load(backbone, device=device)
+    model, preprocess = CLIP.load(backbone, device=device)
     model = model.eval()
     model_config = backbone
     return model, model_config, preprocess, get_image_features

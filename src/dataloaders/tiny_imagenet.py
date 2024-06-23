@@ -1,3 +1,5 @@
+import os
+
 import torch
 
 from torchvision import datasets, transforms
@@ -28,7 +30,7 @@ def corrupt(project_root, corruption_name='gaussian_noise', severity=1, batch_si
 
     # Dataset object using the ImageFolder convention with crop and normalization applied
     distorted_dataset = datasets.ImageFolder(
-        root=f'{project_root}/' + corruption_name + '/' + str(severity),
+        root=os.path.join(project_root, 'data', 'Tiny-ImageNet-C', corruption_name, str(severity)),
         transform=tlist
     )
 
@@ -41,7 +43,7 @@ def corrupt(project_root, corruption_name='gaussian_noise', severity=1, batch_si
         pin_memory=True
     ), len(distorted_dataset.classes)
 
-def clean(project_root='../imagenet_data', batch_size=64, num_workers=1, shuffle=False, transform=None):
+def clean(project_root, batch_size=64, num_workers=1, shuffle=False, transform=None):
     """
     Returns a pytorch DataLoader object of the imagenet images using the pytorch ImageFolder convention
     :param project_root: Path to the root of the project (parent directory of the `data` folder)
@@ -66,7 +68,7 @@ def clean(project_root='../imagenet_data', batch_size=64, num_workers=1, shuffle
 
     # Dataset object using the ImageFolder convention with crop and normalization applied
     dataset = datasets.ImageFolder(
-        root=f'{project_root}/imagenet/',
+        root=os.path.join(project_root, 'data', 'tiny-imagenet-200'),
         transform=tlist
     )
 
