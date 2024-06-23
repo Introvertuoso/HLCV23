@@ -38,6 +38,10 @@ corruption_choices = [
     'zoom_blur',
     'jpeg_compression',
 ]
+# d['Speckle Noise'] = speckle_noise
+# d['Gaussian Blur'] = gaussian_blur
+# d['Spatter'] = spatter
+# d['Saturate'] = saturate
 
 def validate_argument(arg: list, options: list):
     to_remove = []
