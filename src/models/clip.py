@@ -15,7 +15,7 @@ feature_dim = 512
 import clip
 @torch.no_grad()
 def get_image_features(model, processor, img_tensor):
-    inputs = processor(images=img_tensor, return_tensors="pt")
+    inputs = processor(img_tensor)
     with torch.no_grad():
         image_features = model.encode_image(inputs)
     return image_features.float()

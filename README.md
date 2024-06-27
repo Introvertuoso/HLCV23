@@ -31,6 +31,8 @@ To be added later
     python -m venv .venv
     source .venv/bin/activate
     pip install -r requirements.txt
+    cd packages/robustness/ImageNet-C/imagenet_c
+    pip install .
 ```
 
 ## Usage

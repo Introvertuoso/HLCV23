@@ -10,8 +10,8 @@ from tqdm import tqdm
 from PIL import Image
 from torchvision.transforms import transforms
 
-source = "../data/tiny/tiny-imagenet-200/train"
-target = '../data/tiny-c/ours'
+source = "../data/tiny/val"
+target = '../data/tiny-c/val'
 
 transform = transforms.Compose(
     [
@@ -48,6 +48,7 @@ for noise in tqdm([
         if not os.path.exists(subdir):
             os.mkdir(subdir)
         for cls in tqdm(os.listdir(source), leave=False, desc='Classes'):
+            if not os.path.isdir(os.path.join(source, cls)): continue
             label = os.path.join(subdir, cls)
             if not os.path.exists(label):
                 os.mkdir(label)

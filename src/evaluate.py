@@ -6,7 +6,7 @@ import time
 import requests
 import torch
 import tarfile
-import dataloaders
+from dataloaders import tiny_imagenet
 
 from urllib.request import urlopen
 from tqdm import tqdm
@@ -92,7 +92,7 @@ def main(args):
             path = os.path.join('../data', ds)
             c_path = path + '-c'
             if ds == 'tiny':
-                if os.path.exists(path):
+                if not os.path.exists(path):
                     os.makedirs(path)
                     response = requests.get('http://cs231n.stanford.edu/tiny-imagenet-200.zip', stream=True)
 
@@ -111,25 +111,29 @@ def main(args):
                     ZipFile(os.path.join(path, 'temp.file'), 'r').extractall(path=path)
                     os.remove(os.path.join(path, 'temp.file'))
 
-                if os.path.exists(c_path):
-                    os.makedirs(c_path)
-                    response = requests.get('https://zenodo.org/records/2536630/files/Tiny-ImageNet-C.tar?download=1', stream=True)
+                if not os.path.exists(c_path):
+                    # os.makedirs(c_path)
+                    # response = requests.get('https://zenodo.org/records/2536630/files/Tiny-ImageNet-C.tar?download=1', stream=True)
+                    #
+                    # total_size = int(response.headers.get("content-length", 0))
+                    # block_size = 1024
+                    #
+                    # with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
+                    #     with open(os.path.join(c_path, 'temp.file'), "wb") as file:
+                    #         for data in response.iter_content(block_size):
+                    #             progress_bar.update(len(data))
+                    #             file.write(data)
+                    #
+                    # if total_size != 0 and progress_bar.n != total_size:
+                    #     raise RuntimeError("Could not download file")
+                    #
+                    # tarfile.open(os.path.join(c_path, 'temp.file'), mode="r|*").extractall(path=c_path)
+                    # os.remove(os.path.join(c_path, 'temp.file'))
+                    pass
 
-                    total_size = int(response.headers.get("content-length", 0))
-                    block_size = 1024
-
-                    with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
-                        with open(os.path.join(c_path, 'temp.file'), "wb") as file:
-                            for data in response.iter_content(block_size):
-                                progress_bar.update(len(data))
-                                file.write(data)
-
-                    if total_size != 0 and progress_bar.n != total_size:
-                        raise RuntimeError("Could not download file")
-
-                    tarfile.open(os.path.join(c_path, 'temp.file'), mode="r|*").extractall(path=c_path)
-                    os.remove(os.path.join(c_path, 'temp.file'))
                 res['dataset'] = ds
+
+                clean_loader = tiny_imagenet.clean('../', transform=transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()]))
 
                 for cor in corruption_list: # where is the normal dataset?
                     # Set corruption
@@ -140,7 +144,7 @@ def main(args):
                     start = time.time()
                     for sev in tqdm([1, 2, 3, 4, 5]):
                         # Compute KNN classifier for each severity
-                        corrupt, num_classes = dataloaders.tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev, transform=transforms.Resize((224, 224))) # only add resize transform here
+                        corrupt, num_classes = tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev, transform=transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()])) # only add resize transform here
                         features, labels = extract_ds_features(corrupt, get_image_features_fn, args.device)
                         res['severity'+str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
                         res['time'] = time.time() - start
@@ -156,7 +160,7 @@ if __name__ == '__main__':
         description="Script for evaluating model performance(s) on a given dataset(s) and corruption type(s).")
     parser.add_argument('--model', type=str, choices=model_choices, action='extend', nargs='+', required=True, help="Model name(s)")
     parser.add_argument('--dataset', type=str, choices=dataset_choices, action='extend', nargs='+', required=True, help="Dataset name(s)")
-    parser.add_argument('--corruption', type=str, choices=corruption_choices, action='extend', nargs='+', default=['jpeg_compression'], help="Image corruption type(s)")
+    parser.add_argument('--corruption', type=str, choices=corruption_choices, action='extend', nargs='+', default=['brightness'], help="Image corruption type(s)")
     parser.add_argument('--device', type=str, default='cpu', help="Computation device")
     ## add config file
     # parser.add('--config_file', type=str, default='config.yaml', help='config file for the experiment')

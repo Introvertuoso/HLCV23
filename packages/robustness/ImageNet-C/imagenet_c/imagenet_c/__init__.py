@@ -1,9 +1,15 @@
+import os.path
+
 import numpy as np
 from PIL import Image
 # from .corruptions import *
 import sys
-sys.path.append('../../create_c')
-from make_imagenet64_c import *
+sys.path.append(os.path.join(os.path.dirname(__file__),'../../create_c'))
+from make_imagenet_64_c import gaussian_noise, shot_noise, impulse_noise, defocus_blur,\
+                    glass_blur, motion_blur, zoom_blur, snow, frost, fog,\
+                    brightness, contrast, elastic_transform, pixelate, jpeg_compression,\
+                    speckle_noise, gaussian_blur, spatter, saturate
+
 corruption_tuple = (gaussian_noise, shot_noise, impulse_noise, defocus_blur,
                     glass_blur, motion_blur, zoom_blur, snow, frost, fog,
                     brightness, contrast, elastic_transform, pixelate, jpeg_compression,
