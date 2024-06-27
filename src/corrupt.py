@@ -10,8 +10,8 @@ from tqdm import tqdm
 from PIL import Image
 from torchvision.transforms import transforms
 
-source = '../data/caltech-101'
-target = '../data/caltech-101-c'
+source = "../data/tiny/tiny-imagenet-200/train"
+target = '../data/tiny-c/ours'
 
 transform = transforms.Compose(
     [
@@ -23,7 +23,23 @@ transform = transforms.Compose(
 if not os.path.exists(target):
     os.mkdir(target)
 
-for noise in tqdm(['gaussian_noise', 'impulse_noise', 'shot_noise', 'speckle_noise'], desc='Noise types'):
+for noise in tqdm([
+    'brightness',
+    'contrast',
+    'defocus_blur',
+    'elastic_transform',
+    'fog',
+    'frost',
+    'gaussian_noise',
+    'glass_blur',
+    'impulse_noise',
+    'motion_blur',
+    'pixelate',
+    'shot_noise',
+    'snow',
+    'zoom_blur',
+    'jpeg_compression',
+], desc='Noise types'):
     dir = os.path.join(target, noise)
     if not os.path.exists(dir):
         os.mkdir(dir)
@@ -35,7 +51,7 @@ for noise in tqdm(['gaussian_noise', 'impulse_noise', 'shot_noise', 'speckle_noi
             label = os.path.join(subdir, cls)
             if not os.path.exists(label):
                 os.mkdir(label)
-            input = os.path.join(source, cls)
+            input = os.path.join(source, cls, 'images')
             for img in tqdm(os.listdir(input), leave=False, desc='Images'):
                 save_path = os.path.join(label, img)
                 # remove this condition if you wish to overwrite
