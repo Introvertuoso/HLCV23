@@ -1,6 +1,7 @@
 import torch
 import PIL.Image as Image
 import requests
+from functools import partial
 
 # from transformers import CLIPProcessor, CLIPModel
 
@@ -12,14 +13,20 @@ feature_dim = 512
 #     return model
 
 import clip
+@torch.no_grad()
+def get_image_features(model, processor, img_tensor):
+    inputs = processor(images=img_tensor, return_tensors="pt")
+    with torch.no_grad():
+        image_features = model.encode_image(inputs)
+    return image_features.float()
 
 
-def define_model(device='cuda'):
-    backbone = "ViT-B/16"
+def define_model(backbone="ViT-B/16", device='cuda'):
+    
     model, preprocess = clip.load(backbone, device=device)
-    model = model.eval()
-    model_config = backbone
-    return model, model_config, preprocess, get_image_features
+    model = model.eval().to(device)
+    get_image_features_fn = partial(get_image_features, model, preprocess)
+    return model, get_image_features_fn 
 
 
 # def get_image_features(model, img_tensor):
@@ -27,10 +34,7 @@ def define_model(device='cuda'):
 #     image_features = model.get_image_features(**inputs)
 #     return image_features
 
-def get_image_features(model, img_tensor):
-    with torch.no_grad():
-        image_features = model.encode_image(img_tensor)
-    return image_features.float()
+
 
 
 if __name__ == '__main__':

@@ -4,16 +4,36 @@ import torch.nn.functional as F
 
 from tqdm import tqdm
 
+def get_model(model_name, device='cuda', **kwargs):
+    if model_name == 'clip':
+        from models import clip
+        backbone = kwargs.get('backbone', 'ViT-B/32')
+        model, get_image_features_fn = clip.define_model(backbone, device=device)
+        return model, get_image_features_fn 
+    if model_name == 'blip':
+        from models import blip
+        backbone = kwargs.get('backbone', 'Salesforce/blip-image-captioning-base')
+        model, get_image_features_fn = blip.define_model(backbone, device=device)
+        return model, get_image_features_fn
+    # elif model_name == 'vit':
+    #     from transformers import ViTFeatureExtractor, ViTForImageClassification
+    #     model = ViTForImageClassification.from_pretrained("nateraw/vit-base-patch16-224-in21k")
+    #     model = model.eval()
+    #     model_config = "nateraw/vit-base-patch16-224-in21k"
+    #     preprocess = ViTFeatureExtractor.from_pretrained("nateraw/vit-base-patch16-224-in21k")
+    #     return model, model_config, preprocess, get_image_features_vit
+    # else:
+    #     raise ValueError("Model not supported"
 
 @torch.no_grad()
-def extract_ds_features(model, data_loader, get_features_fn, device):
+def extract_ds_features(data_loader, get_features_fn, device):
     """
     pass the torch model and the dataloader along with the get_img_features function
     """
     feature_list, labels_list = [], []
     for batch in tqdm(data_loader, leave=False):
         img_tensor, labels = batch[0].to(device), batch[1].to(device)
-        feature_tensor = get_features_fn(model, img_tensor)
+        feature_tensor = get_features_fn(img_tensor)
         feature_list.append(feature_tensor)
         labels_list.append(labels)
 

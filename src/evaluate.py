@@ -12,7 +12,9 @@ from urllib.request import urlopen
 from tqdm import tqdm
 from io import BytesIO
 from zipfile import ZipFile
-from utils import extract_ds_features, knn_classifier
+from utils import extract_ds_features, knn_classifier, get_model
+from torchvision import transforms
+import yaml 
 
 model_choices = [
     'clip',
@@ -74,10 +76,12 @@ def main(args):
         }
 
         # Load model
-        if mdl == 'clip':
-            model, config, transform, get_image_features = models.clip.define_model(device=args.device)
-            res['model'] = mdl
-            res['config'] = config
+        # if mdl == 'clip':
+        model, get_image_features_fn  = get_model(mdl, device=args.device)
+        res['model'] = mdl
+        res['get_features_fn'] = get_image_features_fn
+        
+        res['config'] = config[mdl.upper()]
 
         for ds in dataset_list:
             # Load data
@@ -93,7 +97,7 @@ def main(args):
                     tarfile.open(http_response, mode="r|gz").extractall(path=c_path)
                 res['dataset'] = ds
 
-                for cor in corruption_list:
+                for cor in corruption_list: # where is the normal dataset?
                     # Set corruption
                     res['corruption'] = cor
                     directory = os.path.join('../results/', mdl, ds, cor)
@@ -102,11 +106,10 @@ def main(args):
                     start = time.time()
                     for sev in tqdm([1, 2, 3, 4, 5]):
                         # Compute KNN classifier for each severity
-                        corrupt, num_classes = dataloaders.tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev, transform=transform)
-                        features, labels = extract_ds_features(model, corrupt, get_image_features, args.device)
+                        corrupt, num_classes = dataloaders.tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev, transform=transforms.Resize((224, 224))) # only add resize transform here
+                        features, labels = extract_ds_features(corrupt, get_image_features_fn, args.device)
                         res['severity'+str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
                         res['time'] = time.time() - start
-
                         # Save results
                         with open(os.path.join(directory, time.asctime())+'.json', "x") as outfile:
                             json.dump(res, outfile)
@@ -121,6 +124,8 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, choices=dataset_choices, action='extend', nargs='+', required=True, help="Dataset name(s)")
     parser.add_argument('--corruption', type=str, choices=corruption_choices, action='extend', nargs='+', default=['jpeg_compression'], help="Image corruption type(s)")
     parser.add_argument('--device', type=str, default='cpu', help="Computation device")
+    ## add config file
+    parser.add('--config_file', type=str, default='config.yaml', help='config file for the experiment')
     args = parser.parse_args()
 
     main(args)
