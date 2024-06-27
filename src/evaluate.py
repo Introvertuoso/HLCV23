@@ -3,18 +3,12 @@ import json
 import os
 import time
 
-import requests
 import torch
-import tarfile
 from dataloaders import tiny_imagenet
 
-from urllib.request import urlopen
 from tqdm import tqdm
-from io import BytesIO
-from zipfile import ZipFile
-from utils import extract_ds_features, knn_classifier, get_model
+from utils import extract_ds_features, knn_classifier, get_model, download_and_extract
 from torchvision import transforms
-import yaml 
 
 model_choices = [
     'clip',
@@ -39,6 +33,8 @@ corruption_choices = [
     'zoom_blur',
     'jpeg_compression',
 ]
+
+
 # d['Speckle Noise'] = speckle_noise
 # d['Gaussian Blur'] = gaussian_blur
 # d['Spatter'] = spatter
@@ -53,6 +49,7 @@ def validate_argument(arg: list, options: list):
     for i in to_remove:
         arg.remove(i)
     return arg
+
 
 def main(args):
     # Adapted from https://github.com/sail-sg/MMCBench/tree/main
@@ -81,10 +78,10 @@ def main(args):
 
         # Load model
         # if mdl == 'clip':
-        model, get_image_features_fn  = get_model(mdl, device=args.device)
+        model, get_image_features_fn = get_model(mdl, device=args.device)
         res['model'] = mdl
         res['get_features_fn'] = get_image_features_fn
-        
+
         # res['config'] = config[mdl.upper()]
 
         for ds in dataset_list:
@@ -93,49 +90,19 @@ def main(args):
             c_path = path + '-c'
             if ds == 'tiny':
                 if not os.path.exists(path):
-                    os.makedirs(path)
-                    response = requests.get('http://cs231n.stanford.edu/tiny-imagenet-200.zip', stream=True)
-
-                    total_size = int(response.headers.get("content-length", 0))
-                    block_size = 1024
-
-                    with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
-                        with open(os.path.join(path, 'temp.file'), "wb") as file:
-                            for data in response.iter_content(block_size):
-                                progress_bar.update(len(data))
-                                file.write(data)
-
-                    if total_size != 0 and progress_bar.n != total_size:
-                        raise RuntimeError("Could not download file")
-
-                    ZipFile(os.path.join(path, 'temp.file'), 'r').extractall(path=path)
-                    os.remove(os.path.join(path, 'temp.file'))
+                    tiny_url = 'https://drive.google.com/file/d/1x5TptuPTwiXTbyX0XrltUQ6XAmCv9i5H/view?usp=share_link'
+                    download_and_extract(path, tiny_url)
 
                 if not os.path.exists(c_path):
-                    # os.makedirs(c_path)
-                    # response = requests.get('https://zenodo.org/records/2536630/files/Tiny-ImageNet-C.tar?download=1', stream=True)
-                    #
-                    # total_size = int(response.headers.get("content-length", 0))
-                    # block_size = 1024
-                    #
-                    # with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
-                    #     with open(os.path.join(c_path, 'temp.file'), "wb") as file:
-                    #         for data in response.iter_content(block_size):
-                    #             progress_bar.update(len(data))
-                    #             file.write(data)
-                    #
-                    # if total_size != 0 and progress_bar.n != total_size:
-                    #     raise RuntimeError("Could not download file")
-                    #
-                    # tarfile.open(os.path.join(c_path, 'temp.file'), mode="r|*").extractall(path=c_path)
-                    # os.remove(os.path.join(c_path, 'temp.file'))
-                    pass
+                    tiny_c_url = 'https://drive.google.com/file/d/1p1XvarMzwmxEbR1qf9H04LsBNSANdNHE/view?usp=sharing'
+                    download_and_extract(c_path, tiny_c_url)
 
                 res['dataset'] = ds
 
-                clean_loader = tiny_imagenet.clean('../', transform=transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()]))
+                clean_loader = tiny_imagenet.clean('../', transform=transforms.Compose(
+                    [transforms.Resize((224, 224)), transforms.ToTensor()]))
 
-                for cor in corruption_list: # where is the normal dataset?
+                for cor in corruption_list:  # where is the normal dataset?
                     # Set corruption
                     res['corruption'] = cor
                     directory = os.path.join('../results/', mdl, ds, cor)
@@ -144,23 +111,31 @@ def main(args):
                     start = time.time()
                     for sev in tqdm([1, 2, 3, 4, 5]):
                         # Compute KNN classifier for each severity
-                        corrupt, num_classes = tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev, transform=transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()])) # only add resize transform here
+                        corrupt, num_classes = tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev,
+                                                                     transform=transforms.Compose(
+                                                                         [transforms.Resize((224, 224)),
+                                                                          transforms.ToTensor()]))  # only add resize transform here
                         features, labels = extract_ds_features(corrupt, get_image_features_fn, args.device)
-                        res['severity'+str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
+                        res['severity' + str(sev)] = knn_classifier(features, labels, features, labels,
+                                                                    num_classes=num_classes)
                         res['time'] = time.time() - start
                         # Save results
-                        with open(os.path.join(directory, time.asctime())+'.json', "w") as outfile:
+                        with open(os.path.join(directory, time.asctime()) + '.json', "w") as outfile:
                             json.dump(res, outfile)
 
                     # Print final results
                     print(res)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Script for evaluating model performance(s) on a given dataset(s) and corruption type(s).")
-    parser.add_argument('--model', type=str, choices=model_choices, action='extend', nargs='+', required=True, help="Model name(s)")
-    parser.add_argument('--dataset', type=str, choices=dataset_choices, action='extend', nargs='+', required=True, help="Dataset name(s)")
-    parser.add_argument('--corruption', type=str, choices=corruption_choices, action='extend', nargs='+', default=['brightness'], help="Image corruption type(s)")
+    parser.add_argument('--model', type=str, choices=model_choices, action='extend', nargs='+', required=True,
+                        help="Model name(s)")
+    parser.add_argument('--dataset', type=str, choices=dataset_choices, action='extend', nargs='+', required=True,
+                        help="Dataset name(s)")
+    parser.add_argument('--corruption', type=str, choices=corruption_choices, action='extend', nargs='+',
+                        default=['brightness'], help="Image corruption type(s)")
     parser.add_argument('--device', type=str, default='cpu', help="Computation device")
     ## add config file
     # parser.add('--config_file', type=str, default='config.yaml', help='config file for the experiment')

@@ -31,6 +31,9 @@ To be added later
     python -m venv .venv
     source .venv/bin/activate
     pip install -r requirements.txt
+```
+- [Extra] In order to get the script ```corrupt.py``` to work:
+```
     cd packages/robustness/ImageNet-C/imagenet_c
     pip install .
 ```
