@@ -6,7 +6,6 @@ import time
 import requests
 import torch
 import tarfile
-from models import clip
 import dataloaders
 
 from urllib.request import urlopen
@@ -86,7 +85,7 @@ def main(args):
         res['model'] = mdl
         res['get_features_fn'] = get_image_features_fn
         
-        res['config'] = config[mdl.upper()]
+        # res['config'] = config[mdl.upper()]
 
         for ds in dataset_list:
             # Load data
@@ -160,7 +159,7 @@ if __name__ == '__main__':
     parser.add_argument('--corruption', type=str, choices=corruption_choices, action='extend', nargs='+', default=['jpeg_compression'], help="Image corruption type(s)")
     parser.add_argument('--device', type=str, default='cpu', help="Computation device")
     ## add config file
-    parser.add('--config_file', type=str, default='config.yaml', help='config file for the experiment')
+    # parser.add('--config_file', type=str, default='config.yaml', help='config file for the experiment')
     args = parser.parse_args()
 
     main(args)
