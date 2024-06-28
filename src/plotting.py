@@ -1,11 +1,13 @@
 import os.path
+
+import torch
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 from torchvision.utils import make_grid, save_image
 from torchvision.datasets import ImageFolder
 
 
-def mosaic(clean_path: str, corruption_path: str, save_path: str, name: str, cls: int = None, sample_size: int = 6):
+def mosaic(clean_path: str, corruption_path: str, save_path: str, name: str, cls: int = None, sample_size: int = 6, seed=0):
     clean_dataset = ImageFolder(root=clean_path, transform=transforms.ToTensor())
     corrupted_datasets = [ImageFolder(root=os.path.join(corruption_path, str(i)), transform=transforms.ToTensor())
                           for i in range(1, 6)]
@@ -13,8 +15,8 @@ def mosaic(clean_path: str, corruption_path: str, save_path: str, name: str, cls
         indices = [i for i, x in enumerate(clean_dataset.targets) if x == cls]
         clean_dataset = Subset(clean_dataset, indices)
         corrupted_datasets = [Subset(ds, indices) for ds in corrupted_datasets]
-    clean_loader = DataLoader(clean_dataset, batch_size=sample_size, shuffle=False, pin_memory=True)
-    corrupted_loaders = [DataLoader(ds, batch_size=sample_size, shuffle=False, pin_memory=True,)
+    clean_loader = DataLoader(clean_dataset, batch_size=sample_size, shuffle=True, generator=torch.Generator().manual_seed(seed), pin_memory=True)
+    corrupted_loaders = [DataLoader(ds, batch_size=sample_size, shuffle=True, generator=torch.Generator().manual_seed(seed), pin_memory=True)
                          for ds in corrupted_datasets]
     clean_batch, _ = iter(clean_loader).next()
     corrupted_batches = [iter(dl).next()[0] for dl in corrupted_loaders]
@@ -28,4 +30,4 @@ def mosaic(clean_path: str, corruption_path: str, save_path: str, name: str, cls
     save_image(make_grid(images, nrow=6), os.path.join(save_path, name + '.png'))
 
 
-# mosaic('../data/tiny/val', '../data/tiny-c/val/brightness', '.', 'Mosaic', 199)
+# mosaic('../data/tiny/val', '../data/tiny-c/val/brightness', '.', 'Mosaic', cls=69)
