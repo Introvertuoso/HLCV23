@@ -7,7 +7,8 @@ import torch
 from dataloaders import tiny_imagenet
 
 from tqdm import tqdm
-from utils import extract_ds_features, knn_classifier, get_model, download_and_extract
+from utils import extract_ds_features, knn_classifier, get_model, download_and_extract, get_classifier, \
+    train_classifier, evaluate
 from torchvision import transforms
 
 model_choices = [
@@ -68,6 +69,8 @@ def main(args):
             'dataset': '',
             'corruption': '',
             'device': args.device,
+            'train_logs': {},
+            'severity0': {},
             'severity1': {},
             'severity2': {},
             'severity3': {},
@@ -96,7 +99,12 @@ def main(args):
 
                 res['dataset'] = ds
 
-                clean_loader = tiny_imagenet.clean('../', transform=model.preprocess_fn)
+                train_loader, num_classes = tiny_imagenet.clean('../', transform=model.preprocess_fn, split='train')
+                val_loader, _ = tiny_imagenet.clean('../', transform=model.preprocess_fn)
+                clf = get_classifier(model.feature_dim, num_classes)
+                res['train_logs'] = train_classifier(clf, train_loader, val_loader, model)
+
+                res['severity0'] = {'accuracy': res['train_logs']['val_accuracies'][-1]}
 
                 for cor in corruption_list:  # where is the normal dataset?
                     # Set corruption
@@ -109,9 +117,10 @@ def main(args):
                         # Compute KNN classifier for each severity
                         corrupt, num_classes = tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev,
                                                                      transform=model.preprocess_fn)  # only add resize transform here
-                        features, labels = extract_ds_features(corrupt, model, args.device)
-                        res['severity' + str(sev)] = knn_classifier(features, labels, features, labels,
-                                                                    num_classes=num_classes)
+                        # features, labels = extract_ds_features(corrupt, model, args.device)
+                        # res['severity' + str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
+                        res['severity' + str(sev)] = {'accuracy': evaluate(clf, model, corrupt)[1]}
+
                         res['time'] = time.time() - start
                         # Save results
                         with open(os.path.join(directory, time.asctime()) + '.json', "w") as outfile:

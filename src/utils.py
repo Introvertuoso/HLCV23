@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 def download_and_extract(path, url):
     os.makedirs(path)
-    response = requests.get(url,stream=True)
+    response = requests.get(url, stream=True)
 
     total_size = int(response.headers.get("content-length", 0))
     block_size = 1024
@@ -29,6 +29,7 @@ def download_and_extract(path, url):
 
     ZipFile(os.path.join(path, 'temp.file'), 'r').extractall(path=path)
     os.remove(os.path.join(path, 'temp.file'))
+
 
 def get_model(model_name, device='cuda', **kwargs):
     if model_name == 'clip':
@@ -51,6 +52,7 @@ def get_model(model_name, device='cuda', **kwargs):
     # else:
     #     raise ValueError("Model not supported"
 
+
 @torch.no_grad()
 def extract_ds_features(data_loader, model, device):
     """
@@ -69,6 +71,9 @@ def extract_ds_features(data_loader, model, device):
     return all_features_tensor, all_labels_tensor
 
 
+def extract_features(tensor, model):
+    return model(tensor)
+
 def get_classifier(embedding_size: int, num_of_classes: int):
     return nn.Sequential(nn.Linear(embedding_size, num_of_classes), nn.Softmax())
 
@@ -77,13 +82,14 @@ def get_acc(gt, preds):
     return ((preds.argmax(1) == gt).sum() / len(preds)).cpu().numpy()
 
 
-def evaluate(model, val_loader, loss_fn=nn.CrossEntropyLoss, device='cpu'):
+def evaluate(model, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), device='cpu'):
     eval_acc = []
     eval_losses = []
     for eval_batch in val_loader:
         ims, labels = eval_batch
         ims, labels = ims.to(device), labels.to(device)
-        preds = model(ims)
+        features = extract_features(ims, embedding)
+        preds = model(features)
         loss_val = loss_fn(preds, labels.view(-1, ))
         val_acc = get_acc(labels.view(-1, ), preds)
 
@@ -93,14 +99,18 @@ def evaluate(model, val_loader, loss_fn=nn.CrossEntropyLoss, device='cpu'):
     return np.mean(eval_losses), np.mean(eval_acc)
 
 
-def train_classifier(clf_model, optim, train_loader, loss_fn=nn.CrossEntropyLoss, epochs=30, device='cpu'):
+def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), epochs=30, device='cpu'):
+    optim = torch.optim.Adam(clf_model.parameters(), lr=0.001)
     losses = []
-    accuracies = []
+    accs = []
+    val_losses = []
+    val_accs = []
     for ep in range(epochs):
+        run_loss = 0.
         ep_losses = []
-        ep_accuracies = []
+        ep_accs = []
 
-        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=train_loader, loss_fn=loss_fn, device=device)
+        eval_loss, eval_acc = evaluate(model=clf_model,val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
         if ep == 0:
             print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
 
@@ -108,7 +118,8 @@ def train_classifier(clf_model, optim, train_loader, loss_fn=nn.CrossEntropyLoss
             imgs, labels = batch
             imgs, labels = imgs.to(device), labels.to(device)
             optim.zero_grad()
-            preds = clf_model(imgs.float())
+            features = extract_features(imgs, embedding)
+            preds = clf_model(features.float())
             # print(preds.argmax(1), labels.view(-1, ))
             loss = loss_fn(preds, labels.view(-1, ))
 
@@ -116,18 +127,21 @@ def train_classifier(clf_model, optim, train_loader, loss_fn=nn.CrossEntropyLoss
             optim.step()
 
             ep_losses.append(loss.item())
-            ep_accuracies.append(get_acc(labels.view(-1, ), preds))
+            ep_accs.append(get_acc(labels.view(-1, ), preds))
 
         ep_loss = np.mean(ep_losses)
         losses.append(ep_loss)
 
-        ep_acc = np.mean(ep_accuracies)
-        accuracies.append(ep_acc)
+        ep_acc = np.mean(ep_accs)
+        accs.append(ep_acc)
 
-        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=train_loader, loss_fn=loss_fn, device=device)
+        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, loss_fn=loss_fn, device=device)
+        val_losses.append(eval_loss)
+        val_accs.append(eval_acc)
         print(f' train loss: {ep_loss}, val loss: {eval_loss}, Train accuracy {ep_acc}, val accuracy {eval_acc} ')
 
-    return {'losses': losses, 'accuracies': accuracies}
+    return {'train_losses': losses, 'train_accuracies': accs, 'val_losses': val_losses, 'val_accuracies': val_accs}
+
 
 @torch.no_grad()
 def knn_classifier(train_features, train_labels, test_features, test_labels, k=5, num_classes=10):
@@ -191,4 +205,4 @@ def knn_classifier(train_features, train_labels, test_features, test_labels, k=5
         total += targets.size(0)
     top1 = top1 * 100.0 / total
     top5 = top5 * 100.0 / total
-    return {'accuracy': {'top1': top1, 'top5': top5},}
+    return {'accuracy': {'top1': top1, 'top5': top5}, }

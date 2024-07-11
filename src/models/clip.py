@@ -4,7 +4,7 @@ import requests
 from functools import partial
 from torch import nn 
 import clip
-from base import BaseModel
+from models.base import BaseModel
 
 class CLIPModel(BaseModel):
     def __init__(self, backbone="ViT-B/16", device='cuda'):

@@ -84,4 +84,4 @@ def clean(project_root, split='val', batch_size=64, num_workers=1, shuffle=False
         shuffle=shuffle,
         num_workers=num_workers,
         pin_memory=True
-    )
+    ), len(dataset.classes)
