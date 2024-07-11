@@ -1,10 +1,12 @@
 import os
 from zipfile import ZipFile
 
+import numpy as np
 import requests
 import torch
 
 import torch.nn.functional as F
+from torch import nn
 
 from tqdm import tqdm
 
@@ -65,6 +67,67 @@ def extract_ds_features(data_loader, model, device):
     all_labels_tensor = torch.cat(labels_list)
 
     return all_features_tensor, all_labels_tensor
+
+
+def get_classifier(embedding_size: int, num_of_classes: int):
+    return nn.Sequential(nn.Linear(embedding_size, num_of_classes), nn.Softmax())
+
+
+def get_acc(gt, preds):
+    return ((preds.argmax(1) == gt).sum() / len(preds)).cpu().numpy()
+
+
+def evaluate(model, val_loader, loss_fn=nn.CrossEntropyLoss, device='cpu'):
+    eval_acc = []
+    eval_losses = []
+    for eval_batch in val_loader:
+        ims, labels = eval_batch
+        ims, labels = ims.to(device), labels.to(device)
+        preds = model(ims)
+        loss_val = loss_fn(preds, labels.view(-1, ))
+        val_acc = get_acc(labels.view(-1, ), preds)
+
+        eval_acc.append(val_acc)
+        eval_losses.append(loss_val.item())
+
+    return np.mean(eval_losses), np.mean(eval_acc)
+
+
+def train_classifier(clf_model, optim, train_loader, loss_fn=nn.CrossEntropyLoss, epochs=30, device='cpu'):
+    losses = []
+    accuracies = []
+    for ep in range(epochs):
+        ep_losses = []
+        ep_accuracies = []
+
+        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=train_loader, loss_fn=loss_fn, device=device)
+        if ep == 0:
+            print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
+
+        for i, batch in enumerate(train_loader, 0):
+            imgs, labels = batch
+            imgs, labels = imgs.to(device), labels.to(device)
+            optim.zero_grad()
+            preds = clf_model(imgs.float())
+            # print(preds.argmax(1), labels.view(-1, ))
+            loss = loss_fn(preds, labels.view(-1, ))
+
+            loss.backward()
+            optim.step()
+
+            ep_losses.append(loss.item())
+            ep_accuracies.append(get_acc(labels.view(-1, ), preds))
+
+        ep_loss = np.mean(ep_losses)
+        losses.append(ep_loss)
+
+        ep_acc = np.mean(ep_accuracies)
+        accuracies.append(ep_acc)
+
+        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=train_loader, loss_fn=loss_fn, device=device)
+        print(f' train loss: {ep_loss}, val loss: {eval_loss}, Train accuracy {ep_acc}, val accuracy {eval_acc} ')
+
+    return {'losses': losses, 'accuracies': accuracies}
 
 @torch.no_grad()
 def knn_classifier(train_features, train_labels, test_features, test_labels, k=5, num_classes=10):
