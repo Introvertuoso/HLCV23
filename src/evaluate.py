@@ -77,11 +77,8 @@ def main(args):
         }
 
         # Load model
-        # if mdl == 'clip':
-        model, get_image_features_fn = get_model(mdl, device=args.device)
+        model = get_model(mdl, device=args.device)
         res['model'] = mdl
-        res['get_features_fn'] = get_image_features_fn
-
         # res['config'] = config[mdl.upper()]
 
         for ds in dataset_list:
@@ -99,8 +96,7 @@ def main(args):
 
                 res['dataset'] = ds
 
-                clean_loader = tiny_imagenet.clean('../', transform=transforms.Compose(
-                    [transforms.Resize((224, 224)), transforms.ToTensor()]))
+                clean_loader = tiny_imagenet.clean('../', transform=model.preprocess_fn)
 
                 for cor in corruption_list:  # where is the normal dataset?
                     # Set corruption
@@ -112,10 +108,8 @@ def main(args):
                     for sev in tqdm([1, 2, 3, 4, 5]):
                         # Compute KNN classifier for each severity
                         corrupt, num_classes = tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev,
-                                                                     transform=transforms.Compose(
-                                                                         [transforms.Resize((224, 224)),
-                                                                          transforms.ToTensor()]))  # only add resize transform here
-                        features, labels = extract_ds_features(corrupt, get_image_features_fn, args.device)
+                                                                     transform=model.preprocess_fn)  # only add resize transform here
+                        features, labels = extract_ds_features(corrupt, model, args.device)
                         res['severity' + str(sev)] = knn_classifier(features, labels, features, labels,
                                                                     num_classes=num_classes)
                         res['time'] = time.time() - start

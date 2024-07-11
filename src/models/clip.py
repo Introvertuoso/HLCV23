@@ -2,31 +2,43 @@ import torch
 import PIL.Image as Image
 import requests
 from functools import partial
-
-# from transformers import CLIPProcessor, CLIPModel
-
-# processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-
-feature_dim = 512
-# def define_model(device='cuda'):
-#     model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
-#     return model
-
+from torch import nn 
 import clip
-@torch.no_grad()
-def get_image_features(model, processor, img_tensor):
-    inputs = processor(img_tensor)
-    with torch.no_grad():
-        image_features = model.encode_image(inputs)
-    return image_features.float()
+from base import BaseModel
 
-
-def define_model(backbone="ViT-B/16", device='cuda'):
+class CLIPModel(BaseModel):
+    def __init__(self, backbone="ViT-B/16", device='cuda'):
+        super().__init__(feature_dim=512, device=device)
+        self.model, self.processor = clip.load(backbone, device=device)
+        self.device = device
+        self.feature_dim = 512
+        self.preprocess_fn = self.preprocess
+        #TODO: make model configs from a yaml file 
     
-    model, preprocess = clip.load(backbone, device=device)
-    model = model.eval().to(device)
-    get_image_features_fn = partial(get_image_features, model, preprocess)
-    return model, get_image_features_fn 
+    def preprocess(self, image):
+        return self.processor(image)
+    
+    def forward(self, img_tensor):
+        img_tensor = img_tensor.to(self.device)
+        with torch.no_grad():
+            image_features = self.model.encode_image(img_tensor)
+        return image_features.float()
+        
+        
+# @torch.no_grad()
+# def get_image_features(model, processor, img_tensor):
+#     inputs = processor(img_tensor)
+#     with torch.no_grad():
+#         image_features = model.encode_image(inputs)
+#     return image_features.float()
+
+
+# def define_model(backbone="ViT-B/16", device='cuda'):
+    
+#     model, preprocess = clip.load(backbone, device=device)
+#     model = model.eval().to(device)
+#     get_image_features_fn = partial(get_image_features, model, preprocess)
+#     return model, get_image_features_fn 
 
 
 # def get_image_features(model, img_tensor):

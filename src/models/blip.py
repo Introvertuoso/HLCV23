@@ -6,9 +6,29 @@ import requests
 import torch
 from transformers import AutoProcessor, BlipModel
 from functools import partial
+from torch import nn
+from base import BaseModel
 
-# model = BlipModel.from_pretrained("Salesforce/blip-image-captioning-base")
-# processor = AutoProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+class BLIPModel(BaseModel):
+    def __init__(self, backbone="Salesforce/blip-image-captioning-base", device='cuda'):
+        super().__init__(feature_dim=768, device=device)
+        self.model = BlipModel.from_pretrained(backbone).to(device)
+        self.processor = AutoProcessor.from_pretrained(backbone)
+        self.device = device
+        self.feature_dim = 768
+        self.preprocess_fn = self.preprocess
+        #TODO: make model configs from a yaml file 
+    
+    def preprocess(self, image):
+        return self.processor(images=image, return_tensors="pt")
+    
+    def forward(self, img_tensor):
+        img_tensor = img_tensor.to(self.device)
+        with torch.no_grad():
+            image_features = self.model.get_image_features(**img_tensor)
+        return image_features.float()
+        
+
 @torch.no_grad()
 def get_image_features(model, processor, img_tensor, device='cuda'):
     inputs = processor(images=img_tensor, return_tensors="pt").to(device)
