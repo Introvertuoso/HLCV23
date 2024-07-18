@@ -79,9 +79,11 @@ def extract_ds_features(data_loader, model, device):
 
     return all_features_tensor, all_labels_tensor
 
+
 @torch.no_grad()
 def extract_features(tensor, model):
     return model(tensor)
+
 
 def get_classifier(embedding_size: int, num_of_classes: int):
     return nn.Sequential(nn.Linear(embedding_size, num_of_classes))
@@ -120,8 +122,8 @@ def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.
         run_loss = 0.
         ep_losses = []
         ep_accs = []
-        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
         if ep == 0:
+            eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
             print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
 
         for i, batch in enumerate(tqdm(train_loader, leave=False), 0):
