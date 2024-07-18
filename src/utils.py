@@ -1,3 +1,4 @@
+import logging
 import os
 from zipfile import ZipFile
 
@@ -13,22 +14,30 @@ from tqdm import tqdm
 
 def download_and_extract(path, url):
     os.makedirs(path)
-    response = requests.get(url, stream=True)
+    tmp_name = 'temp.zip'
 
-    total_size = int(response.headers.get("content-length", 0))
-    block_size = 1024
+    import platform
+    if platform.system() == 'Windows':
+        import gdown
+        gdown.download(url, os.path.join(path, tmp_name), quiet=False, fuzzy=True)
 
-    with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
-        with open(os.path.join(path, 'temp.file'), "wb") as file:
-            for data in response.iter_content(block_size):
-                progress_bar.update(len(data))
-                file.write(data)
+    else:
+        response = requests.get(url, stream=True)
 
-    if total_size != 0 and progress_bar.n != total_size:
-        raise RuntimeError("Could not download file")
+        total_size = int(response.headers.get("content-length", 0))
+        block_size = 1024
 
-    ZipFile(os.path.join(path, 'temp.file'), 'r').extractall(path=path)
-    os.remove(os.path.join(path, 'temp.file'))
+        with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
+            with open(os.path.join(path, tmp_name), "wb") as file:
+                for data in response.iter_content(block_size):
+                    progress_bar.update(len(data))
+                    file.write(data)
+
+        if total_size != 0 and progress_bar.n != total_size:
+            raise RuntimeError("Could not download file")
+
+    ZipFile(os.path.join(path, tmp_name), 'r').extractall(path=path)
+    os.remove(os.path.join(path, tmp_name))
 
 
 def get_model(model_name, device='cuda', **kwargs):
@@ -83,11 +92,13 @@ def get_acc(gt, preds):
 
 
 def evaluate(model, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), device='cpu'):
+    model = model.to(device)
     eval_acc = []
     eval_losses = []
     for eval_batch in val_loader:
         ims, labels = eval_batch
         ims, labels = ims.to(device), labels.to(device)
+        embedding = embedding.to(device)
         features = extract_features(ims, embedding)
         preds = model(features)
         loss_val = loss_fn(preds, labels.view(-1, ))
@@ -109,8 +120,7 @@ def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.
         run_loss = 0.
         ep_losses = []
         ep_accs = []
-
-        eval_loss, eval_acc = evaluate(model=clf_model,val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
+        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
         if ep == 0:
             print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
 
@@ -120,7 +130,6 @@ def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.
             optim.zero_grad()
             features = extract_features(imgs, embedding)
             preds = clf_model(features.float())
-            # print(preds.argmax(1), labels.view(-1, ))
             loss = loss_fn(preds, labels.view(-1, ))
 
             loss.backward()
@@ -135,7 +144,7 @@ def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.
         ep_acc = np.mean(ep_accs)
         accs.append(ep_acc)
 
-        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, loss_fn=loss_fn, device=device)
+        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
         val_losses.append(eval_loss)
         val_accs.append(eval_acc)
         print(f' train loss: {ep_loss}, val loss: {eval_loss}, Train accuracy {ep_acc}, val accuracy {eval_acc} ')

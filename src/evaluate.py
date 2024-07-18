@@ -86,7 +86,7 @@ def main(args):
 
         for ds in dataset_list:
             # Load data
-            path = os.path.join('../data', ds)
+            path = os.path.join('..', 'data', ds)
             c_path = path + '-c'
             if ds == 'tiny':
                 if not os.path.exists(path):
@@ -99,27 +99,27 @@ def main(args):
 
                 res['dataset'] = ds
 
-                train_loader, num_classes = tiny_imagenet.clean('../', transform=model.preprocess_fn, split='train')
-                val_loader, _ = tiny_imagenet.clean('../', transform=model.preprocess_fn)
+                train_loader, num_classes = tiny_imagenet.clean('..', transform=model.preprocess_fn, split='train')
+                val_loader, _ = tiny_imagenet.clean('..', transform=model.preprocess_fn)
                 clf = get_classifier(model.feature_dim, num_classes)
-                res['train_logs'] = train_classifier(clf, train_loader, val_loader, model)
+                res['train_logs'] = train_classifier(clf, train_loader, val_loader, model, device=args.device)
 
                 res['severity0'] = {'accuracy': res['train_logs']['val_accuracies'][-1]}
 
                 for cor in corruption_list:  # where is the normal dataset?
                     # Set corruption
                     res['corruption'] = cor
-                    directory = os.path.join('../results/', mdl, ds, cor)
+                    directory = os.path.join('..', 'results', mdl, ds, cor)
                     os.makedirs(directory, exist_ok=True)
 
                     start = time.time()
                     for sev in tqdm([1, 2, 3, 4, 5]):
                         # Compute KNN classifier for each severity
-                        corrupt, num_classes = tiny_imagenet.corrupt('../', corruption_name=cor, severity=sev,
+                        corrupt, num_classes = tiny_imagenet.corrupt('..', corruption_name=cor, severity=sev,
                                                                      transform=model.preprocess_fn)  # only add resize transform here
                         # features, labels = extract_ds_features(corrupt, model, args.device)
                         # res['severity' + str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
-                        res['severity' + str(sev)] = {'accuracy': evaluate(clf, model, corrupt)[1]}
+                        res['severity' + str(sev)] = {'accuracy': evaluate(clf, model, corrupt, device=args.device)[1]}
 
                         res['time'] = time.time() - start
                         # Save results
