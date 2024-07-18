@@ -79,12 +79,12 @@ def extract_ds_features(data_loader, model, device):
 
     return all_features_tensor, all_labels_tensor
 
-
+@torch.no_grad()
 def extract_features(tensor, model):
     return model(tensor)
 
 def get_classifier(embedding_size: int, num_of_classes: int):
-    return nn.Sequential(nn.Linear(embedding_size, num_of_classes), nn.Softmax())
+    return nn.Sequential(nn.Linear(embedding_size, num_of_classes))
 
 
 def get_acc(gt, preds):
@@ -95,7 +95,7 @@ def evaluate(model, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), device
     model = model.to(device)
     eval_acc = []
     eval_losses = []
-    for eval_batch in val_loader:
+    for eval_batch in tqdm(val_loader, leave=False):
         ims, labels = eval_batch
         ims, labels = ims.to(device), labels.to(device)
         embedding = embedding.to(device)
@@ -116,7 +116,7 @@ def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.
     accs = []
     val_losses = []
     val_accs = []
-    for ep in range(epochs):
+    for ep in tqdm(range(epochs)):
         run_loss = 0.
         ep_losses = []
         ep_accs = []
@@ -124,7 +124,7 @@ def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.
         if ep == 0:
             print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
 
-        for i, batch in enumerate(train_loader, 0):
+        for i, batch in enumerate(tqdm(train_loader, leave=False), 0):
             imgs, labels = batch
             imgs, labels = imgs.to(device), labels.to(device)
             optim.zero_grad()

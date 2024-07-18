@@ -99,7 +99,7 @@ def main(args):
 
                 res['dataset'] = ds
 
-                train_loader, num_classes = tiny_imagenet.clean('..', transform=model.preprocess_fn, split='train')
+                train_loader, num_classes = tiny_imagenet.clean('..', transform=model.preprocess_fn, split='val')
                 val_loader, _ = tiny_imagenet.clean('..', transform=model.preprocess_fn)
                 clf = get_classifier(model.feature_dim, num_classes)
                 res['train_logs'] = train_classifier(clf, train_loader, val_loader, model, device=args.device)
