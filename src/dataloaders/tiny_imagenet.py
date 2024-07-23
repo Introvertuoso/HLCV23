@@ -31,7 +31,7 @@ def corrupt(project_root, corruption_name='gaussian_noise', severity=1, batch_si
 
     # Dataset object using the ImageFolder convention with crop and normalization applied
     distorted_dataset = datasets.ImageFolder(
-        root=os.path.join(project_root, 'data', 'tiny-c', 'val', corruption_name, str(severity)),
+        root=os.path.join(project_root, 'data', 'tiny-c', 'tiny-c', 'val', corruption_name, str(severity)),
         transform=tlist
     )
 

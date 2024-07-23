@@ -111,7 +111,7 @@ def evaluate(model, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), device
 
 
 def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), epochs=30, device='cpu'):
-    # optim = torch.optim.Adam(clf_model.parameters(), lr=0.001)
+    optim = torch.optim.Adam(clf_model.parameters(), lr=0.001)
     losses = []
     accs = []
     val_losses = []
@@ -119,36 +119,35 @@ def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.
     for ep in tqdm(range(epochs)):
         run_loss = 0.
         ep_losses = []
-        []
         ep_accs = []
-        # eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
-        # if ep == 0:
-        #     print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
+        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
+        if ep == 0:
+            print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
 
         for i, batch in enumerate(tqdm(train_loader, leave=False), 0):
             imgs, labels = batch
             imgs, labels = imgs.to(device), labels.to(device)
-            # optim.zero_grad()
+            optim.zero_grad()
             features = extract_features(imgs, embedding)
-            # preds = clf_model(features.float())
-            # loss = loss_fn(preds, labels.view(-1, ))
-            #
-            # loss.backward()
-            # optim.step()
-            #
-            # ep_losses.append(loss.item())
-            # ep_accs.append(get_acc(labels.view(-1, ), preds))
+            preds = clf_model(features.float())
+            loss = loss_fn(preds, labels.view(-1, ))
 
-        # ep_loss = np.mean(ep_losses)
-        # losses.append(ep_loss)
-        #
-        # ep_acc = np.mean(ep_accs)
-        # accs.append(ep_acc)
+            loss.backward()
+            optim.step()
 
-        # eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
-        # val_losses.append(eval_loss)
-        # val_accs.append(eval_acc)
-        # print(f' train loss: {ep_loss}, val loss: {eval_loss}, Train accuracy {ep_acc}, val accuracy {eval_acc} ')
+            ep_losses.append(loss.item())
+            ep_accs.append(get_acc(labels.view(-1, ), preds))
+
+        ep_loss = np.mean(ep_losses)
+        losses.append(ep_loss)
+
+        ep_acc = np.mean(ep_accs)
+        accs.append(ep_acc)
+
+        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
+        val_losses.append(eval_loss)
+        val_accs.append(eval_acc)
+        print(f' train loss: {ep_loss}, val loss: {eval_loss}, Train accuracy {ep_acc}, val accuracy {eval_acc} ')
 
     return {'train_losses': losses, 'train_accuracies': accs, 'val_losses': val_losses, 'val_accuracies': val_accs}
 
