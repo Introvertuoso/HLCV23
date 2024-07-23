@@ -99,12 +99,20 @@ def main(args):
 
                 res['dataset'] = ds
 
-                train_loader, num_classes = tiny_imagenet.clean('..', transform=model.preprocess_fn, split='val')
-                val_loader, _ = tiny_imagenet.clean('..', transform=model.preprocess_fn)
+                train_loader, num_classes = tiny_imagenet.clean('..', transform=model.preprocess_fn, split='train', num_workers=4)
+                val_loader, _ = tiny_imagenet.clean('..', transform=model.preprocess_fn, num_workers=4)
+                # JAWAD
+                if redo or not os.path.exists(cached_path):
+                    generate_cahce(model,...)
+                else:
+                    train_hdf, val_hdf = load_embeds(....)
+
+                embed_train_loader, embed_val_loader = get_cached_loader(....) # OMER
                 clf = get_classifier(model.feature_dim, num_classes)
                 res['train_logs'] = train_classifier(clf, train_loader, val_loader, model, device=args.device)
 
                 res['severity0'] = {'accuracy': res['train_logs']['val_accuracies'][-1]}
+                cache/tiny/clip/{train.hdf, val. val_{noise_type}_{sev} for pairs(noise_type, sev)}
 
                 for cor in corruption_list:  # where is the normal dataset?
                     # Set corruption
