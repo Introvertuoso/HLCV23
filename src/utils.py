@@ -79,9 +79,11 @@ def extract_ds_features(data_loader, model, device):
 
     return all_features_tensor, all_labels_tensor
 
+
 @torch.no_grad()
 def extract_features(tensor, model):
     return model(tensor)
+
 
 def get_classifier(embedding_size: int, num_of_classes: int):
     return nn.Sequential(nn.Linear(embedding_size, num_of_classes))
@@ -91,7 +93,23 @@ def get_acc(gt, preds):
     return ((preds.argmax(1) == gt).sum() / len(preds)).cpu().numpy()
 
 
-def evaluate(model, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), device='cpu'):
+def cache_embeddings(path, loader, model, device='cpu'):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    embeddings = None
+    labels = None
+    for i, batch in enumerate(tqdm(loader, leave=True), 0):
+        im, lbl = batch[0].to(device), batch[1].to(device)
+        features = extract_features(im, model)
+        if i == 0:
+            embeddings, labels = features, lbl
+        else:
+            embeddings = torch.stack((embeddings, features), dim=0)
+            labels = torch.stack((labels, lbl), dim=0)
+
+    torch.save({'embeddings': embeddings, 'labels': labels}, path)
+
+
+def evaluate(model, val_loader, embedding=None, loss_fn=nn.CrossEntropyLoss(), device='cpu'):
     model = model.to(device)
     eval_acc = []
     eval_losses = []
@@ -99,7 +117,10 @@ def evaluate(model, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), device
         ims, labels = eval_batch
         ims, labels = ims.to(device), labels.to(device)
         embedding = embedding.to(device)
-        features = extract_features(ims, embedding)
+        if embedding is not None:
+            features = extract_features(ims, embedding)
+        else:
+            features = ims
         preds = model(features)
         loss_val = loss_fn(preds, labels.view(-1, ))
         val_acc = get_acc(labels.view(-1, ), preds)
@@ -110,7 +131,8 @@ def evaluate(model, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), device
     return np.mean(eval_losses), np.mean(eval_acc)
 
 
-def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.CrossEntropyLoss(), epochs=30, device='cpu'):
+def train_classifier(clf_model, train_loader, val_loader, embedding=None, loss_fn=nn.CrossEntropyLoss(), epochs=30,
+                     device='cpu'):
     optim = torch.optim.Adam(clf_model.parameters(), lr=0.001)
     losses = []
     accs = []
@@ -120,15 +142,19 @@ def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.
         run_loss = 0.
         ep_losses = []
         ep_accs = []
-        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
         if ep == 0:
+            eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn,
+                                           device=device)
             print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
 
         for i, batch in enumerate(tqdm(train_loader, leave=False), 0):
             imgs, labels = batch
             imgs, labels = imgs.to(device), labels.to(device)
             optim.zero_grad()
-            features = extract_features(imgs, embedding)
+            if embedding is not None:
+                features = extract_features(imgs, embedding)
+            else:
+                features = imgs
             preds = clf_model(features.float())
             loss = loss_fn(preds, labels.view(-1, ))
 
@@ -144,7 +170,8 @@ def train_classifier(clf_model, train_loader, val_loader, embedding, loss_fn=nn.
         ep_acc = np.mean(ep_accs)
         accs.append(ep_acc)
 
-        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn, device=device)
+        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn,
+                                       device=device)
         val_losses.append(eval_loss)
         val_accs.append(eval_acc)
         print(f' train loss: {ep_loss}, val loss: {eval_loss}, Train accuracy {ep_acc}, val accuracy {eval_acc} ')

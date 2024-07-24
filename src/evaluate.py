@@ -8,7 +8,7 @@ from dataloaders import tiny_imagenet
 
 from tqdm import tqdm
 from utils import extract_ds_features, knn_classifier, get_model, download_and_extract, get_classifier, \
-    train_classifier, evaluate
+    train_classifier, evaluate, cache_embeddings
 from torchvision import transforms
 
 model_choices = [
@@ -99,10 +99,19 @@ def main(args):
 
                 res['dataset'] = ds
 
-                train_loader, num_classes = tiny_imagenet.clean('..', transform=model.preprocess_fn, split='val')
-                val_loader, _ = tiny_imagenet.clean('..', transform=model.preprocess_fn)
+                train_path = os.path.join('..', 'cache', ds, mdl, 'val.pt')
+                val_path = os.path.join('..', 'cache', ds, mdl, 'train.pt')
+                if args.invalidate_caches or not os.path.exists(train_path) or not os.path.exists(val_path):
+                    train_loader, num_classes = tiny_imagenet.clean(
+                        '..', transform=model.preprocess_fn, split='train', batch_size=1
+                    )
+                    cache_embeddings(train_path, train_loader, model, args.device)
+                    val_loader, _ = tiny_imagenet.clean('..', transform=model.preprocess_fn, batch_size=1)
+                    cache_embeddings(val_path, val_loader, model, args.device)
+
+                # TODO: load the embeddings as train and val loader
                 clf = get_classifier(model.feature_dim, num_classes)
-                res['train_logs'] = train_classifier(clf, train_loader, val_loader, model, device=args.device)
+                res['train_logs'] = train_classifier(clf, train_loader, val_loader, device=args.device)
 
                 res['severity0'] = {'accuracy': res['train_logs']['val_accuracies'][-1]}
 
@@ -115,10 +124,15 @@ def main(args):
                     start = time.time()
                     for sev in tqdm([1, 2, 3, 4, 5]):
                         # Compute KNN classifier for each severity
-                        corrupt, num_classes = tiny_imagenet.corrupt('..', corruption_name=cor, severity=sev,
-                                                                     transform=model.preprocess_fn)  # only add resize transform here
-                        # features, labels = extract_ds_features(corrupt, model, args.device)
+                        path = os.path.join('..', 'cache', ds, mdl, f'val_{cor}_{sev}')
+                        if args.invalidate_caches or not os.path.exists(path):
+                            corrupt, num_classes = tiny_imagenet.corrupt(
+                                '..', corruption_name=cor, severity=sev, transform=model.preprocess_fn, batch_size=1
+                            )  # only add resize transform here
+                            cache_embeddings(path, corrupt, model, args.device)
+
                         # res['severity' + str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
+                        # TODO: load embeddings as loader
                         res['severity' + str(sev)] = {'accuracy': evaluate(clf, model, corrupt, device=args.device)[1]}
 
                         res['time'] = time.time() - start
@@ -140,6 +154,7 @@ if __name__ == '__main__':
     parser.add_argument('--corruption', type=str, choices=corruption_choices, action='extend', nargs='+',
                         default=['brightness'], help="Image corruption type(s)")
     parser.add_argument('--device', type=str, default='cpu', help="Computation device")
+    parser.add_argument('--invalidate_caches', action='store_true', help="Invalidate caches.")
     ## add config file
     # parser.add('--config_file', type=str, default='config.yaml', help='config file for the experiment')
     args = parser.parse_args()
