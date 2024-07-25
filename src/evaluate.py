@@ -111,13 +111,13 @@ def main(args):
                     )
                     cache_embeddings(val_path, val_loader, model, args.device)
 
-                # train_cached_loader = tiny_imagenet.cached(train_path, batch_size=args.c_batch_size)
-                # clean_val_loader = tiny_imagenet.cached(val_path, batch_size=args.c_batch_size)
-                #
-                # clf = get_classifier(model.feature_dim, num_classes)
-                # res['train_logs'] = train_classifier(clf, train_cached_loader, clean_val_loader, device=args.device)
-                #
-                # res['severity0'] = {'accuracy': res['train_logs']['val_accuracies'][-1]}
+                train_cached_loader, num_classes = tiny_imagenet.cached(train_path, batch_size=args.c_batch_size)
+                clean_val_loader, _ = tiny_imagenet.cached(val_path, batch_size=args.c_batch_size)
+
+                clf = get_classifier(model.feature_dim, num_classes)
+                res['train_logs'] = train_classifier(clf, train_cached_loader, clean_val_loader, device=args.device)
+
+                res['severity0'] = {'accuracy': res['train_logs']['val_accuracies'][-1]}
 
                 for cor in corruption_list:  # where is the normal dataset?
                     # Set corruption

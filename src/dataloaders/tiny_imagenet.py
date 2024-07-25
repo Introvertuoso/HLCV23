@@ -1,7 +1,7 @@
 import os
 import torch
 from torchvision import datasets, transforms
-from datasets import CachedTinyImageNet
+from dataloaders.datasets import CachedTinyImageNet
 
 # code was inspired from: https://github.com/hendrycks/robustness/blob/master/ImageNet-C/test.py
 def corrupt(project_root, corruption_name='gaussian_noise', severity=1, batch_size=64,
@@ -103,5 +103,5 @@ def cached(cache_path, batch_size=64, num_workers=1, shuffle=False, ):
         shuffle=shuffle,
         num_workers=num_workers,
         pin_memory=True
-    )
+    ), len(cached_dataset.classes)
     
