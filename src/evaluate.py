@@ -99,8 +99,8 @@ def main(args):
 
                 res['dataset'] = ds
 
-                train_path = os.path.join('..', 'cache', ds, mdl, 'train.pt')
-                val_path = os.path.join('..', 'cache', ds, mdl, 'val.pt')
+                train_path = os.path.join('..', 'cache', ds, mdl, 'val.pt')
+                val_path = os.path.join('..', 'cache', ds, mdl, 'train.pt')
                 if args.invalidate_caches or not os.path.exists(train_path) or not os.path.exists(val_path):
                     train_loader, num_classes = tiny_imagenet.clean(
                         '..', transform=model.preprocess_fn, split='train', batch_size=1
@@ -108,13 +108,10 @@ def main(args):
                     cache_embeddings(train_path, train_loader, model, args.device)
                     val_loader, _ = tiny_imagenet.clean('..', transform=model.preprocess_fn, batch_size=1)
                     cache_embeddings(val_path, val_loader, model, args.device)
-                else:
-                    train_cached_loader = tiny_imagenet.cached(train_path, batch_size=args.c_batch_size)
-                    clean_val_loader = tiny_imagenet.cached(val_path, batch_size=args.c_batch_size)
 
                 # TODO: load the embeddings as train and val loader
                 clf = get_classifier(model.feature_dim, num_classes)
-                res['train_logs'] = train_classifier(clf, train_cached_loader, clean_val_loader, device=args.device)
+                res['train_logs'] = train_classifier(clf, train_loader, val_loader, device=args.device)
 
                 res['severity0'] = {'accuracy': res['train_logs']['val_accuracies'][-1]}
 
@@ -133,12 +130,10 @@ def main(args):
                                 '..', corruption_name=cor, severity=sev, transform=model.preprocess_fn, batch_size=1
                             )  # only add resize transform here
                             cache_embeddings(path, corrupt, model, args.device)
-                        else:
-                            corrupt_loader = tiny_imagenet.cached(path, batch_size=args.c_batch_size)
 
                         # res['severity' + str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
                         # TODO: load embeddings as loader
-                        res['severity' + str(sev)] = {'accuracy': evaluate(clf, model, corrupt_loader, device=args.device)[1]}
+                        res['severity' + str(sev)] = {'accuracy': evaluate(clf, model, corrupt, device=args.device)[1]}
 
                         res['time'] = time.time() - start
                         # Save results
@@ -160,7 +155,6 @@ if __name__ == '__main__':
                         default=['brightness'], help="Image corruption type(s)")
     parser.add_argument('--device', type=str, default='cpu', help="Computation device")
     parser.add_argument('--invalidate_caches', action='store_true', help="Invalidate caches.")
-    parser.add_argument('--c_batch_size', type=int, default=512, help="cached ds batch size")
     ## add config file
     # parser.add('--config_file', type=str, default='config.yaml', help='config file for the experiment')
     args = parser.parse_args()
