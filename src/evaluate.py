@@ -135,12 +135,12 @@ def main(args):
                             )  # only add resize transform here
                             cache_embeddings(path, corrupt, model, args.device)
 
-                        # corrupt_loader = tiny_imagenet.cached(path, batch_size=args.c_batch_size)
+                        corrupt_loader = tiny_imagenet.cached(path, batch_size=args.c_batch_size)
 
                         # res['severity' + str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
-                        # res['severity' + str(sev)] = {'accuracy': evaluate(clf, model, corrupt_loader, device=args.device)[1]}
+                        res['severity' + str(sev)] = {'accuracy': evaluate(clf, model, corrupt_loader, device=args.device)[1]}
 
-                        res['time'] = time.time() - start
+                        res['time_elapsed'] = time.time() - start
                         # Save results
                         with open(os.path.join(directory, time.strftime("%Y%m%d%H%M%S")) + '.json', "w") as outfile:
                             json.dump(res, outfile)
