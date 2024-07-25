@@ -148,13 +148,13 @@ def train_classifier(clf_model, train_loader, val_loader, embedding=None, loss_f
             print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
 
         for i, batch in enumerate(tqdm(train_loader, leave=False), 0):
-            imgs, labels = batch
-            imgs, labels = imgs.to(device), labels.to(device)
+            features, labels = batch
+            features, labels = features.to(device), labels.to(device)
             optim.zero_grad()
-            if embedding is not None:
-                features = extract_features(imgs, embedding)
-            else:
-                features = imgs
+            # if embedding is not None:
+            #     features = extract_features(imgs, embedding)
+            # else:
+            #     features = imgs
             preds = clf_model(features.float())
             loss = loss_fn(preds, labels.view(-1, ))
 
