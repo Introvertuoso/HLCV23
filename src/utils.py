@@ -106,7 +106,6 @@ def cache_embeddings(path, loader, model, device='cpu'):
             embeddings = torch.cat([embeddings, features], dim=0)
             labels = torch.cat([labels, lbl], dim=0)
 
-    print(f'The stacked embeddings have the shape: {embeddings.shape}')
     torch.save({'embeddings': embeddings, 'labels': labels}, path)
 
 
