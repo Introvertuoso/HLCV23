@@ -1,7 +1,7 @@
 import os
 import torch
-from torchvision import datasets, transforms
-from dataloaders.datasets import CachedTinyImageNet
+from torchvision import transforms, datasets
+from dataloaders.custom_datasets import CachedTinyImageNet, RandomDataset
 
 # code was inspired from: https://github.com/hendrycks/robustness/blob/master/ImageNet-C/test.py
 def corrupt(project_root, corruption_name='gaussian_noise', severity=1, batch_size=64,
@@ -104,4 +104,24 @@ def cached(cache_path, batch_size=64, num_workers=1, shuffle=False, ):
         num_workers=num_workers,
         pin_memory=True
     ), len(cached_dataset.classes)
-    
+
+
+def random(embed_size, dataset_len, batch_size=64, num_workers=1, shuffle=False, ):
+    """
+    Returns a pytorch DataLoader object of the cached embeddings
+    :param cache_path: Path of the saved cached dict
+    :param batch_size: Suitable batch size to train a model on the data
+    :param num_workers: Number of subprocesses to load the data
+    :return: pytorch DataLoader object
+    """
+
+    random_dataset = RandomDataset(embed_size, dataset_len)
+
+    # Dataloader
+    return torch.utils.data.DataLoader(
+        random_dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=num_workers,
+        pin_memory=True
+    ), (random_dataset.classes)

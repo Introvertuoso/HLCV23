@@ -109,16 +109,16 @@ def cache_embeddings(path, loader, model, device='cpu'):
     torch.save({'embeddings': embeddings, 'labels': labels}, path)
 
 
-def evaluate(model, val_loader, embedding=None, loss_fn=nn.CrossEntropyLoss(), device='cpu'):
+def evaluate(model, val_loader, embedding_model=None, loss_fn=nn.CrossEntropyLoss(), device='cpu'):
     model = model.to(device)
     eval_acc = []
     eval_losses = []
     for eval_batch in tqdm(val_loader, leave=False):
         ims, labels = eval_batch
         ims, labels = ims.to(device), labels.to(device)
-        embedding = embedding.to(device)
-        if embedding is not None:
-            features = extract_features(ims, embedding)
+        if embedding_model is not None:
+            embedding_model = embedding_model.to(device)
+            features = extract_features(ims, embedding_model)
         else:
             features = ims
         preds = model(features)
@@ -131,7 +131,7 @@ def evaluate(model, val_loader, embedding=None, loss_fn=nn.CrossEntropyLoss(), d
     return np.mean(eval_losses), np.mean(eval_acc)
 
 
-def train_classifier(clf_model, train_loader, val_loader, embedding=None, loss_fn=nn.CrossEntropyLoss(), epochs=30,
+def train_classifier(clf_model, train_loader, val_loader, embedding_model=None, loss_fn=nn.CrossEntropyLoss(), epochs=5,
                      device='cpu'):
     optim = torch.optim.Adam(clf_model.parameters(), lr=0.001)
     losses = []
@@ -143,7 +143,7 @@ def train_classifier(clf_model, train_loader, val_loader, embedding=None, loss_f
         ep_losses = []
         ep_accs = []
         if ep == 0:
-            eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn,
+            eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding_model=embedding_model, loss_fn=loss_fn,
                                            device=device)
             print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
 
