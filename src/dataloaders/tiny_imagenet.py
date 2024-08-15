@@ -85,7 +85,7 @@ def clean(project_root, split='val', batch_size=64, num_workers=1, shuffle=False
     ), len(dataset.classes)
 
 
-def cached(cache_path, batch_size=64, num_workers=1, shuffle=False, ):
+def cached(cache_path, batch_size=64, num_workers=1, shuffle=False):
     """
     Returns a pytorch DataLoader object of the cached embeddings
     :param cache_path: Path of the saved cached dict
@@ -103,10 +103,10 @@ def cached(cache_path, batch_size=64, num_workers=1, shuffle=False, ):
         shuffle=shuffle,
         num_workers=num_workers,
         pin_memory=True
-    ), len(cached_dataset.classes)
+    ), cached_dataset.n_classes
 
 
-def random(embed_size, dataset_len, batch_size=64, num_workers=1, shuffle=False, ):
+def random(embed_size, dataset_len, batch_size=64, num_workers=1, shuffle=False):
     """
     Returns a pytorch DataLoader object of the cached embeddings
     :param cache_path: Path of the saved cached dict
@@ -124,4 +124,4 @@ def random(embed_size, dataset_len, batch_size=64, num_workers=1, shuffle=False,
         shuffle=shuffle,
         num_workers=num_workers,
         pin_memory=True
-    ), (random_dataset.classes)
+    ), random_dataset.n_classes

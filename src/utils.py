@@ -97,7 +97,7 @@ def cache_embeddings(path, loader, model, device='cpu'):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     embeddings = None
     labels = None
-    for i, batch in enumerate(tqdm(loader, leave=True), 0):
+    for i, batch in enumerate(tqdm(loader, leave=True, desc='Caching embeddings'), 0):
         im, lbl = batch[0].to(device), batch[1].to(device)
         features = extract_features(im, model)
         if i == 0:
@@ -138,43 +138,44 @@ def train_classifier(clf_model, train_loader, val_loader, embedding_model=None, 
     accs = []
     val_losses = []
     val_accs = []
-    for ep in tqdm(range(epochs)):
-        run_loss = 0.
-        ep_losses = []
-        ep_accs = []
-        if ep == 0:
+    with tqdm(range(epochs), desc='Training classifier', unit='epoch') as tepoch:
+        for ep in tepoch:
+            run_loss = 0.
+            ep_losses = []
+            ep_accs = []
+            if ep == 0:
+                eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding_model=embedding_model, loss_fn=loss_fn,
+                                               device=device)
+                tepoch.set_postfix(train_loss=None, val_loss=eval_loss, train_acc=None, val_acc=100. * eval_acc)
+
+            for i, batch in enumerate(tqdm(train_loader, leave=False), 0):
+                features, labels = batch
+                features, labels = features.to(device), labels.to(device)
+                optim.zero_grad()
+                # if embedding is not None:
+                #     features = extract_features(imgs, embedding)
+                # else:
+                #     features = imgs
+                preds = clf_model(features.float())
+                loss = loss_fn(preds, labels.view(-1, ))
+
+                loss.backward()
+                optim.step()
+
+                ep_losses.append(loss.item())
+                ep_accs.append(get_acc(labels.view(-1, ), preds))
+
+            ep_loss = np.mean(ep_losses)
+            losses.append(ep_loss)
+
+            ep_acc = np.mean(ep_accs)
+            accs.append(ep_acc)
+
             eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding_model=embedding_model, loss_fn=loss_fn,
                                            device=device)
-            print(f'initial loss {eval_loss} and initial accuracy {eval_acc}')
-
-        for i, batch in enumerate(tqdm(train_loader, leave=False), 0):
-            features, labels = batch
-            features, labels = features.to(device), labels.to(device)
-            optim.zero_grad()
-            # if embedding is not None:
-            #     features = extract_features(imgs, embedding)
-            # else:
-            #     features = imgs
-            preds = clf_model(features.float())
-            loss = loss_fn(preds, labels.view(-1, ))
-
-            loss.backward()
-            optim.step()
-
-            ep_losses.append(loss.item())
-            ep_accs.append(get_acc(labels.view(-1, ), preds))
-
-        ep_loss = np.mean(ep_losses)
-        losses.append(ep_loss)
-
-        ep_acc = np.mean(ep_accs)
-        accs.append(ep_acc)
-
-        eval_loss, eval_acc = evaluate(model=clf_model, val_loader=val_loader, embedding=embedding, loss_fn=loss_fn,
-                                       device=device)
-        val_losses.append(eval_loss)
-        val_accs.append(eval_acc)
-        print(f' train loss: {ep_loss}, val loss: {eval_loss}, Train accuracy {ep_acc}, val accuracy {eval_acc} ')
+            val_losses.append(eval_loss)
+            val_accs.append(eval_acc)
+            tepoch.set_postfix(train_loss=ep_loss, val_loss=eval_loss, train_acc=100. * ep_acc, val_acc=100. * eval_acc)
 
     return {'train_losses': losses, 'train_accuracies': accs, 'val_losses': val_losses, 'val_accuracies': val_accs}
 

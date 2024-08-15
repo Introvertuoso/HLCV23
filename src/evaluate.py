@@ -132,7 +132,7 @@ def main(args):
 
 
                 clf = get_classifier(model.feature_dim, num_classes)
-                res['train_logs'] = train_classifier(clf, train_cached_loader, clean_val_loader, device=args.device)
+                res['train_logs'] = train_classifier(clf, train_cached_loader, clean_val_loader, epochs=10, device=args.device)
 
                 res['severity0'] = {'accuracy': res['train_logs']['val_accuracies'][-1]}
 
@@ -143,31 +143,35 @@ def main(args):
                     os.makedirs(directory, exist_ok=True)
 
                     start = time.time()
-                    for sev in tqdm([1, 2, 3, 4, 5]):
-                        # Compute KNN classifier for each severity
-                        path = os.path.join('..', 'cache', ds, mdl, f'val_{cor}_{sev}.pt')
-                        if args.random_test:
-                            corrupt_loader, _ = tiny_imagenet.random(model.feature_dim, dataset_len=1000, batch_size=args.c_batch_size)
-                            
-                        else:
-                            if args.invalidate_caches or not os.path.exists(path):
-                                corrupt, num_classes = tiny_imagenet.corrupt(
-                                    '..', corruption_name=cor, severity=sev, transform=model.preprocess_fn, num_workers=4, batch_size=1
-                                )  # only add resize transform here
-                                cache_embeddings(path, corrupt, model, args.device)
 
-                            corrupt_loader = tiny_imagenet.cached(path, batch_size=args.c_batch_size)
+                    with tqdm([1, 2, 3, 4, 5], desc=f'{mdl}, {ds}, {cor}') as tsev:
+                        for sev in tsev:
+                            # Compute KNN classifier for each severity
+                            path = os.path.join('..', 'cache', ds, mdl, f'val_{cor}_{sev}.pt')
+                            if args.random_test:
+                                corrupt_loader, _ = tiny_imagenet.random(model.feature_dim, dataset_len=1000, batch_size=args.c_batch_size)
 
-                        # res['severity' + str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
-                        res['severity' + str(sev)] = {'accuracy': evaluate(clf, corrupt_loader, device=args.device)[1]}
+                            else:
+                                if args.invalidate_caches or not os.path.exists(path):
+                                    corrupt, num_classes = tiny_imagenet.corrupt(
+                                        '..', corruption_name=cor, severity=sev, transform=model.preprocess_fn, num_workers=4, batch_size=1
+                                    )  # only add resize transform here
+                                    cache_embeddings(path, corrupt, model, args.device)
 
-                        res['time_elapsed'] = time.time() - start
-                        
-                        # Save results
-                        with open(os.path.join(directory, exp_save_name) + '.json', "w") as outfile:
-                            json.dump(res, outfile, indent=4, cls=NumpyEncoder)
+                                corrupt_loader, num_classes = tiny_imagenet.cached(path, batch_size=args.c_batch_size)
+
+                            # res['severity' + str(sev)] = knn_classifier(features, labels, features, labels, num_classes=num_classes)
+                            res['severity' + str(sev)] = {'accuracy': evaluate(clf, corrupt_loader, device=args.device)[1]}
+
+                            res['time_elapsed'] = time.time() - start
+
+                            # Save results
+                            with open(os.path.join(directory, exp_save_name) + '.json', "w") as outfile:
+                                json.dump(res, outfile, indent=4, cls=NumpyEncoder)
+
                     # Print final results
-                    print(res)
+                    from pprint import pprint
+                    pprint(res)
 
 
 if __name__ == '__main__':
