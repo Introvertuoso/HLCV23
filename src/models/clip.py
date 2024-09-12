@@ -2,7 +2,8 @@ import torch
 import PIL.Image as Image
 import requests
 from functools import partial
-from torch import nn 
+from torch import nn
+
 import clip
 from models.base import BaseModel
 
@@ -10,13 +11,11 @@ class CLIPModel(BaseModel):
     def __init__(self, backbone="ViT-B/16", device='cuda'):
         super().__init__(feature_dim=512, device=device)
         self.model, self.processor = clip.load(backbone, device=device)
-        self.device = device
-        self.feature_dim = 512
-        self.preprocess_fn = self.preprocess
-        #TODO: make model configs from a yaml file 
+        self.preprocess_fn = self.processor
+        # #TODO: make model configs from a yaml file
     
     def preprocess(self, image):
-        return self.processor(image)
+        ...
     
     def forward(self, img_tensor):
         img_tensor = img_tensor.to(self.device)
