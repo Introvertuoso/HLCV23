@@ -48,8 +48,9 @@ def get_model(model_name, device='cuda', **kwargs):
         return model
     if model_name == 'blip':
         from models.blip import BLIPModel
-        backbone = kwargs.get('backbone', 'Salesforce/blip-image-captioning-base')
-        model = BLIPModel(backbone, device=device)
+        name = kwargs.get('name', "blip_feature_extractor")
+        model_type = kwargs.get('model_type', "base")
+        model = BLIPModel(name, model_type, device=device)
         return model
 
     if model_name == 'dino':

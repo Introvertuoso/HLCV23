@@ -4,30 +4,29 @@
 import PIL.Image as Image
 import requests
 import torch
-from transformers import BlipModel, AutoProcessor
-from functools import partial
-from torch import nn
+from lavis.models import load_model_and_preprocess
 from models.base import BaseModel
 
 class BLIPModel(BaseModel):
-    def __init__(self, backbone="Salesforce/blip-image-captioning-base", device='cuda'):
+    def __init__(self, name="blip_feature_extractor", model_type="base", device='cuda'):
         super().__init__(feature_dim=512, device=device)
-        self.model = BlipModel.from_pretrained(backbone).to(device)
-        self.processor = AutoProcessor.from_pretrained(backbone)
-        self.device = device
-        self.feature_dim = 512
-        self.preprocess_fn = self.preprocess
+        self.model, self.processor, _ = load_model_and_preprocess(
+            name=name,
+            model_type=model_type,
+            is_eval=True,
+            device=self.device
+        )
+        self.preprocess_fn = self.processor["eval"].transform
         #TODO: make model configs from a yaml file 
 
     def preprocess(self, image):
-        inputs = self.processor(images=image, return_tensors="pt")
-        return inputs.pixel_values[0].squeeze()
+        ...
     
     def forward(self, img_tensor):
         img_tensor = img_tensor.to(self.device)
-        input_dicts = dict(pixel_values=img_tensor)
+        sample = {"image": img_tensor, "text_input": None}
         with torch.no_grad():
-            image_features = self.model.get_image_features(**input_dicts)
+            image_features = self.model.extract_features(sample, mode="image").image_embeds
         return image_features.float()
         
 
