@@ -17,25 +17,25 @@ def download_and_extract(path, url):
     tmp_name = 'temp.zip'
 
     import platform
-    if platform.system() == 'Windows':
-        import gdown
-        gdown.download(url, os.path.join(path, tmp_name), quiet=False, fuzzy=True)
+    # if platform.system() == 'Windows':
+    import gdown
+    gdown.download(url, os.path.join(path, tmp_name), quiet=False, fuzzy=True)
 
-    else:
-        response = requests.get(url, stream=True)
+    # else:
+    #     response = requests.get(url, stream=True)
 
-        total_size = int(response.headers.get("content-length", 0))
-        block_size = 1024
+    #     total_size = int(response.headers.get("content-length", 0))
+    #     block_size = 1024
 
-        with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
-            with open(os.path.join(path, tmp_name), "wb") as file:
-                for data in response.iter_content(block_size):
-                    progress_bar.update(len(data))
-                    file.write(data)
+    #     with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
+    #         with open(os.path.join(path, tmp_name), "wb") as file:
+    #             for data in response.iter_content(block_size):
+    #                 progress_bar.update(len(data))
+    #                 file.write(data)
 
-        if total_size != 0 and progress_bar.n != total_size:
-            raise RuntimeError("Could not download file")
-
+    #     if total_size != 0 and progress_bar.n != total_size:
+    #         raise RuntimeError("Could not download file")
+    print('Extracting...', os.path.join(path, tmp_name))
     ZipFile(os.path.join(path, tmp_name), 'r').extractall(path=path)
     os.remove(os.path.join(path, tmp_name))
 
@@ -50,6 +50,12 @@ def get_model(model_name, device='cuda', **kwargs):
         from models.blip import BLIPModel
         backbone = kwargs.get('backbone', 'Salesforce/blip-image-captioning-base')
         model = BLIPModel(backbone, device=device)
+        return model
+
+    if model_name == 'dino':
+        from models.dino import DINOModel
+        backbone = kwargs.get('backbone', 'dino_vitb16')
+        model = DINOModel(backbone, device=device)
         return model
     # elif model_name == 'vit':
     #     from transformers import ViTFeatureExtractor, ViTForImageClassification

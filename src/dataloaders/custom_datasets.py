@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader, Dataset
 class CachedTinyImageNet(Dataset):
     def __init__(self, cache_path):
         self.data = torch.load(cache_path, map_location=torch.device('cpu'))
+        print(f'Loaded cached data from {cache_path}, dims {self.data["embeddings"].shape}')
         self.embeddings = self.data['embeddings']
         self.labels = self.data['labels']
         self.n_classes = 200 #  TODO: check this: (torch.unique(self.labels)[0]) and fix

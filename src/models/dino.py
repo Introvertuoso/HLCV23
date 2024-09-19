@@ -3,25 +3,36 @@ import PIL.Image as Image
 import requests
 from functools import partial
 from torch import nn 
-import clip
-from src.models.base import BaseModel
+from models.base import BaseModel
+from torchvision import transforms, datasets
 
-class CLIPModel(BaseModel):
-    def __init__(self, backbone="ViT-B/16", device='cuda'):
-        super().__init__(feature_dim=512, device=device)
-        self.model, self.processor = clip.load(backbone, device=device)
-        self.device = device
-        self.feature_dim = 512
-        self.preprocess_fn = self.preprocess
+feature_dim = 768
+
+class DINOModel(BaseModel):
+    def __init__(self, backbone="dino_vitb16", device='cuda'):
+        super().__init__(feature_dim=feature_dim, device=device)
+        self.model = torch.hub.load('facebookresearch/dino:main', backbone).to(self.device) #TODO: to change to v2 --> dinov2_vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
+
+        self.transform = self.get_transform()
+        self.preprocess_fn = self.transform
         #TODO: make model configs from a yaml file 
     
     def preprocess(self, image):
-        return self.processor(image)
+        return self.transform(image)
+    
+    def get_transform(self):
+
+        return transforms.Compose([
+            transforms.Resize(256, interpolation=3),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        ])
     
     def forward(self, img_tensor):
         img_tensor = img_tensor.to(self.device)
         with torch.no_grad():
-            image_features = self.model.encode_image(img_tensor)
+            image_features = self.model(img_tensor)
         return image_features.float()
         
         

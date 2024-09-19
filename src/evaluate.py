@@ -7,13 +7,14 @@ import torch
 from dataloaders import tiny_imagenet
 
 from tqdm import tqdm
-from utils import extract_ds_features, knn_classifier, get_model, download_and_extract, get_classifier, \
+from eval_utils import extract_ds_features, knn_classifier, get_model, download_and_extract, get_classifier, \
     train_classifier, evaluate, cache_embeddings
 from torchvision import transforms
 
 model_choices = [
     'clip',
-    'blip'
+    'blip',
+    'dino',
 ]
 dataset_choices = [
     'tiny',
